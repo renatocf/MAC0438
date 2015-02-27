@@ -1,0 +1,147 @@
+Introdução
+============
+
+* Podemos ver um processador como sendo uma pista.
+* "Processador" pode ser entendido como uma unidade de processamento
+  - seja ela um processador em si, um core ou mesmo uma thread.
+* Um processador pode executar vários processos - que em nossa analogia,
+  pode ser visto como um carro atravessando a pista.
+    
+
+* Temos vários cenários de execuções de processos possíveis:
+
+    - MÁQUINA MONOPROCESSADA
+        
+                         t1  t2
+                          :  :                 .-> processador ou núcleo
+        ==================:==:==================
+            [      ]    [ :  : ]    [      ]
+        ==================:==:==================
+                          :  :
+           processo X  processo Y  processo Z
+    
+        - Olhando em dado instante t1, só veremos um processo sendo
+          executado.
+    
+    
+    - MÁQUINA MULTIPROCESSADA
+
+                        processo Y
+        
+                          t1
+        ===================:====================
+                        [  :   ]                 -> processador 1
+        -------------------:--------------------
+            [      ]    [  :   ]                 -> processador 2
+        ===================:====================
+    
+           processo X  processo Z
+    
+    
+    - CLUSTER DE MÁQUINAS
+   
+                          t1 
+        ===================:====================
+                        [  :   ]                 -> máquina 1
+        ===================:====================
+               processo X  :
+                           :
+        ===================:====================
+                        [  :   ]                 -> máquina 2
+        ===================:====================
+               processo Y  :
+                           :
+        ===================:====================
+                        [  :   ]                 -> máquina 3
+        ===================:====================
+               processo Z  :
+                           :
+    
+* Nessa disciplina, veremos principalmente o caso de máquinas mono e
+  multiprocessadas. O estudo de clusteres é de estudo de redes e
+  programação paralela.
+
+* Suponhmos que existam duas variáveis: x1 e x2. x1 pode ser acessada
+  apenas do processador 1, e x2, apenas no processador 2. Dois processos
+  Y e Z podem precisar de ambos. Na nossa analogia, para 'trocar de
+  faixa', pode haver colisões (problema com acesso a variáveis). 
+
+                        processo Y
+        
+                          t1       .-- colisão
+        ===================:=======|============
+                        [  :   ]  \|/            -> variável x1
+        -------------------:-------x------------
+            [      ]    [  :   ]  / \            -> variável x2
+        ===================:====================
+    
+           processo X  processo Z
+
+* Para que os processos funcionem de forma correta (para que os carros
+  não se choquem), precisamos definir protocolos e mecanismos para
+  sinalização (como "dar a seta" ou semáforos no trânsito).
+
+* Programação concorrente:
+  Um programa que contém 2 ou mais processos que TRABALHAM JUNTOS
+  para realizar uma tarefa.        ^^^^^^^^^     ^^^^^^^^^^^^^^^^
+                                    |            '- processos precisam
+                                    |               se comunicar para
+                                    |               isso!
+                                    '- processos ou threads
+
+* Para fazer a programação concorrente, precisamos de COMUNICAÇÃO
+  e SINCRONIZAÇÃO
+
+    - A COMUNICAÇÃO pode ocorrer de duas maneiras:
+        - Variáveis compartilhadas
+          Comuns a máquinas mono e multiprocessadas, em que existe uma
+          única memória (em uma única máquina).
+        - Troca de mensagens
+          Comum a clusteres de máquinas, em que vários computadores
+          têm várias memórias. A mensagem transmite que ação deve ser
+          realizada em que máquina.
+    
+    * A SINCRONIZAÇÂO pode ocorrer de duas maneiras:
+        - Exclusão mútua
+          Para evitar que REGIÕES CRÍTICAS sejam executadas ao mesmo
+          tempo (em geral, uma região crítica é aquela que acessa
+          variáveis compartilhadas).
+          - Na analogia, a exclusão mútua é parecida com a técnica
+            de colocar semáforos numa esquina.
+
+        - Sincronização por condição
+          Um processo esspera até uma condição ser TRUE. Ela também
+          é usada para evitar acesso a variáveis compartilhadas.
+          - Na analogia, a sincronização por condição é como
+            uma seta.
+
+* Exemplo: problema do produtor-consumidor
+    
+         .--------------.  
+         | produtorOK   | Variáveis para controlar a sincronização
+         | consumidorOK | fazem parte do protocolo
+         '--------------' 
+    
+                PRODUTOR ---------.   .------> CONSUMIDOR
+                                  |   |
+                                | |   | |
+                                | ^   | |
+                                |       |
+                                | x = 1 |
+                                '-------'
+    
+    - Exclusão mútua: 
+      Para evitar que o produtor escreva enquanto o consumidor ainda 
+      está lendo
+    - Sincronização por condição:
+      Para avisar ao consumidor que o produtor atualizou X. Em geral,
+      usam-se outras variáveis compartilhadas para que o produtor e
+      consumidor avisem um ao outro.
+        
+        - Neste caso, o que está sendo atualizado (inteiro) é simples,
+          e costuma durar apenas um ciclo de CPU. Porém, se o produtor
+          e consumidor criarem e consumirem estruturas mais complexas,
+          pode haver problemas na criação.
+        - O problema torna-se ainda mais complexo quando existem 
+          N produtores e M consumidores. Pode ser necessário ainda mais
+          variáveis de sincronização.

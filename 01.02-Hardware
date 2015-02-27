@@ -1,0 +1,102 @@
+Hardware
+=========
+
+* Os problemas de sincronização e concorrência surgiu com a criação
+  do mecanismo de INTERRUPÇÃO. 
+    - O objetivo das interrupções é tirar proveito dos ciclos ociosos
+      do computador (em geral, quando havia entrada e saída, MUITO mais
+      lentos que a CPU).
+    - Nesse ambiente, é necessário preocupar-se com concorrência, pois
+      o processador pode escolher qualquer outro processo quando tiver
+      interrompido o processo atual.
+    
+        ===================================================
+              +++++++++++++|------------|+++++++++++
+        ===================================================
+                processo 1   processo 2   processo 1
+                 rodando      rodando      rodando
+        
+        - O processo 1 pode parar porque está esperando algum IO
+        - O processo 2 pode passar a rodar. Porém, ele pode mexer em
+          alguma variável compartilhada com o processo 1. Ele pode
+          ter de parar para esperar o processo 1 ou continuar até o
+          fim - esse comportamento DEPENDE DO PROBLEMA.
+        - Tanto se o processo 2 for interrompido ou terminar, outro
+          proceso pode acabar.
+        - Para resolver o problema corretamente, é necessário ter um
+          protocolo que GARANTA a ordem de execução ideal.
+        - Conforme os problemas são resolvidos ad hoc (cada um com uma
+          solução de caso único), as soluções vão se repetindo. Assim,
+          surgem frameworks e teorias que resolvem os problemas.
+    
+    - A necessidade do controle de concorrência aumentou ainda mais quando
+      foram criadas as primeiras MÁQUINAS MULTIPROCESSADAS.
+    
+    - Agora, OS PROCESSOS PODEM EXECUTAR DE FORMA ASSÍNCRONA.
+
+* Memória
+    - Estudar a memória é importante porque ela causa problemas
+      que devem ser considerados na solução de problemas concorrentes.
+    
+                  .-----------------------.
+              ||  |        Memória        |  /\
+              ||  | .-------------------. |  ||
+              ||  | | Memória principal | |  ||
+              ||  | '-------------------' |  ||
+        mais  ||  |           |           |  ||  mais
+              ||  |      .----------.     |  ||
+       rápido ||  |      | Cache L1 |     |  || barato
+              ||  |      '----------'     |  ||
+              ||  |           |           |  ||
+              ||  |      .----------.     |  ||
+              ||  |      | Cache L2 |     |  ||
+              \/  |      '----------'     |  ||
+                  '-----------------------'
+                              |
+                           .-----.
+                           | CPU |
+                           '-----'
+    
+    - A memória principal é única. Cada processador, porém, costuma
+      ter linhas de cache próprias.
+    
+    - Por que usar cache?
+        - Localidade temporal
+            Em geral, ao executar uma certa instrução, vamos
+            executar as instruções próximas pouco tempo depois.
+        - Localidade espacial
+            Em geral, as próximas instruções estão localizadas
+            próximas (na memória) da instrução atual. Ao ler e
+            escrever, lemos várias instruções juntas.
+    
+    - A leitura de caches sempre vai da cache L1 subindo até a memória.
+    - Se o dado não estiver em uma delas, o dado é trazido para a
+      memória mais próxima (ex: estava na memória principal, vai para
+      a L1).
+    - Escrever na memória pode não ser atômico, pois nem todos os
+      níveis de mmeória podem ser atualizados ao mesmo tempo. Se
+      esse for o caso, temos INCONSISTÊNCIA DE CACHE.
+    
+    - Exemplo de problema de inconsistência de cache:
+    
+                .--------------------------.
+                |        MEMÓRIA x=1       |
+                '--------------------------'
+                    |                  |
+                .-------.          .-------.
+                | CACHE | x=2      | CACHE | x=1
+                '-------'          '-------'
+                    |                  |
+                .-------.          .-------.
+                | CPU_1 |          | CPU_2 |
+                '-------'          '-------'
+        
+        - Dois processos com variáveis compartilhadas, rodando em
+          CPUs diferentes, podem ter problemas. O processo da CPU_1
+          atualizou X, que foi gravado em sua CACHE. O processo da
+          CPU_2 acessa a memória (não atualizada) e grava o valor
+          em seu cache. O valor lido, assim, está ERRADO.
+        
+        - Como nem todos os problemas têm as mesmas soluções,
+          implementar protocolos que funcionem para um dado problema
+          é missão do programador.

@@ -1,0 +1,78 @@
+Sintaxe
+========
+
+* Exemplo de programa simples (em PSEUDOCÓDIGO)
+
+    for [ i=1 to n ] {
+        write(i);
+    }
+    
+    - Teremos SEMPRE um único resultado possível
+
+* Suponhamos que NÃO PRECISAMOS que os números sejam impressos na ordem.
+  Podemos, então, paralelizar os processos.
+    
+    - Forma 1: 'co'
+    
+        - Vamos criar a notação 'co' (de COncorrente), que executa um
+          laço usando 'n' processos escrevendo o que foi definido.
+        
+        | co [ i=1 to n ] {
+        |     write(i);
+        | }
+        | 
+        | comando1;
+        | comando2;
+        
+        - Teremos até n! resultados diferentes.
+        - Comandos subsequentes após o 'co' são executados depois
+          dos 'n' processos terminarem.
+        
+        - Aqui, 'co' está sendo usado para criar 'n' processos
+          iguais. Porém, poderíamos querer rodar código diferente
+          em processos diferentes. Ex:
+        
+        | co comando1;  } 1º processo (novo)
+        |    comando2;  } 
+        |
+        | // comando3;  } 2º processo (novo)
+        |    comando4;  }
+        |
+        | // comando5;  } 3º processo (novo)
+        |    comando6;  }
+        |
+        | oc
+        | 
+        | comando7; } 4º processo (original)
+        
+        - Dentro dos comandos criados pelo 'co', a execução será
+          sequencial (ao menos que criarmos outros processos com 'co').
+        - O 'comando7' será, necessariamente, executado após os outros
+          3 serem executados.
+    
+    - Forma 2: 'process'
+    
+        | process iteracao [ i=1 to n ] {
+        |     write(i);
+        | }
+        | 
+        | comando1;
+        | comando2;
+        
+        - Os comandos subsequentes continuam a ser executados em
+          paralelo com os n processos.
+    
+    - Apesar de 'co' e 'process' imprimirem os valores de 1 a n de
+      forma paralela sem ordem definida, eles não impõem nenhuma
+      sincronização que consiga resolver os problemas.
+    
+    - 'co' impõe, na verdade, apenas 1 sincronização: o processo
+      original continuará APENAS QUANDO OS OUTROS TERMINAREM.
+
+    - A quantidade de processos a serem criados É RELEVANTE.
+      Criar processos é lento (definir ids, áreas de memória, etc.).
+      Na teoria, isso não será considerado. Na prática, pode haver
+      um ponto em que não compensará mais criar novos programas.
+    
+    - A velocidade usando threads e processos é diferente: em
+      geral, threads são mais baratas (embora adicionem um overhead).

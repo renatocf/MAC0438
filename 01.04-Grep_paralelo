@@ -1,0 +1,87 @@
+Paralelizando o grep
+=====================
+
+* O grep procura, com expressões regulares, lê da entrada padrão
+  e identifica se existe um padrão encontrado.
+
+* Algoritmo de altíssimo nível do grep:
+
+    | string 'line';
+    | read line from 'stdin' and store in 'line';
+    | while (!EOF) {
+    |     search pattern in 'line';
+    |     if (pattern is in 'line')
+    |         write 'line';
+    |     read line from 'stdlin' and store in 'line';
+    | }
+
+* Quando paralelizar:
+    - É necessário ter partes independentes
+    - Duas partes de um programa são independentes se o conjunto
+      de escrita de cada parte é disjunto do conjunto de leitura
+      e do conjunto de escrita da outra parte.
+
+* Analisando o código, temos 3 partes principais:
+    1) imprimindo linha
+    2) buscar o padrão
+    3) ler a próxima linha
+
+* Paralelizando
+    
+    - 1ª versão (INCORRETA)
+    
+        | string 'line';
+        | read line from 'stdin' and store in 'line';
+        | while (!EOF) {
+        |     co search pattern in 'line';
+        |        if (pattern is in 'line')
+        |            write 'line';
+        |     \\ read line from 'stdlin' and store in 'line';
+        |     oc
+        | }
+        
+        - Problema: a variável 'line' é compartilhada. Não
+          podemos reaproveitá-la.
+    
+    - 2ª versão (INCORRETA)
+        
+        - Para tentar resolver o problema inicial, vamos tentar
+          adicionar uma nova variável.
+    
+        | string 'line1', 'line2';
+        | read line from 'stdin' and store in 'line1';
+        | while (!EOF) {
+        |     co search pattern in 'line';
+        |        if (pattern is in 'line1')
+        |            write 'line1';
+        |     \\ read line from 'stdlin' and store in 'line2';
+        |     oc
+        | }
+        
+        - Problema: a variável 'line1' nunca é modificada. Teríamos
+          'line1' impressa até o EOF.
+    
+    - 3ª versão (CORRETA)
+        
+        - Para tentar resolver o problema inicial, vamos tentar
+          adicionar uma nova variável.
+    
+        | string 'line1', 'line2';
+        | read line from 'stdin' and store in 'line1';
+        | while (!EOF) {
+        |     co search pattern in 'line';
+        |        if (pattern is in 'line1')
+        |            write 'line1';
+        |     \\ read line from 'stdlin' and store in 'line2';
+        |     oc
+        |     'line1' = 'line2'
+        | }
+        
+        - Problema: agora, temos a atualização
+        
+        - Compensa? Depende
+            - A cada laço estamos criando e destruindo processos.
+              Isso pode ser LENTO. Como tiramos o 'co' de dentro
+              do while? Assim criamos os processos apenas uma vez.
+            - Se copiar for uma operação lenta, pode ser que
+              não compense.
