@@ -1,0 +1,46 @@
+Lembretes
+==========
+
+* Sincronização
+    - Necessária para manter a "cooperação"
+    - Exclusão mútua: seções críticasnão são executadas ao mesmo tempo
+    - Sincrinização por condição: um processo é atrasado até que uma
+      condição seja verdade
+    - Exemplo do produtor/consumidor (um consumidor não pode consumir o
+      item antes do produtor produzí-lo).
+
+* Hardware
+    - Surgimento da interrupção
+    - Mesmo com um único processador, um processo pode ser interrompido
+    - A ordem de execução dos programas se tornou não-determinísitca
+
+* Memória compartilhada
+    
+        [   Memory   ]          [   Memory   ]
+              ||                      ||
+        ======================================
+                Interconection network
+        ======================================
+                 |                   |
+              [Cache]             [Cache]
+                 |                   |
+               [CPU]               [CPU] 
+
+* Sintaxe
+    | process iteracao[i=1 to n] { # process precisa de um nome
+    |   write(i);                  # Cria 'n' processos, e 'comando'
+    | }                            # é executado no processo original
+    | comando
+
+    | co[i=1 to n] {               # comando é executado apenas quando
+    |   write(i)                   # os 'n' processo criados por 'co'
+    | }                            # terminarem
+    | comando
+
+    | co comando1   # Cria processo 1
+    |    comando2
+    | // comando3   # Cria processo 2
+    |    comando4
+    | oc
+    | comando5      # comando5 só é executado após os dois processos
+    |               # terminarem

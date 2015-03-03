@@ -1,0 +1,26 @@
+Sincronização
+==============
+
+* Dois tipos possíveis:
+    - Exclusão mútua
+    - Sincronização por condição
+
+* ESTADOS DE UM PROGRAMA CONCORRENTE
+    - O estado é um conjunto com os valores de todas as variáveis
+      (explícitas e implícitas)
+    - Estado inicial => valores iniciais das variáveis
+    - Mudanças de estados => SÓ OCORREM DEPOIS DE AÇÕES ATÔMICAS.
+    - HISTÓRIA => Conjunto de todas as entradas do programa
+
+* Exemplo de programa concorrente:
+
+    s0 -> s1 -> s2 -> s3 -> s_final
+          x=1   x=2
+    
+    | int x=1   }
+    | co x++    } Esse programa pode ou não parar...
+    | // x=1    } (depende da ordem de execução)
+    | oc        }
+    
+    - Se a operação x++ for x=x+1 e não for atômica, então o programa
+      pode ser até interrompido no meio do programa.

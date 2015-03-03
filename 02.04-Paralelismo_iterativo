@@ -1,0 +1,125 @@
+Paradigmas de paralelismo
+==========================
+
+* Paralelismo iterativo
+    - Surge para otimizar a existência de laços
+
+    - Exemplo: podemos usar laços para realizar a multiplicação
+      de matrizes
+
+    - Multiplicação de matrizes linear:
+
+        | double a[n,n], b[n,n], c[n,n];
+        | for [i=0 to n-1] { # linhas
+        |     for [j=0 to n-1] { # colunas
+        |         c[i,j] = 0.0;
+        |         for [k=0 to n-1] # produto escalar
+        |             c[i,j] = c[i,j] + a[i,k] - b[k,j];
+        |     }
+        | }
+
+    - Como podemos paralelizar essa multiplicação? Se observarmos os for's 
+      mais externos (i e j), vemos que eles não têm dependência entre duas
+      execuções distintas no mesmo laço (se fosse paralela). Dessa forma,
+      podemos ter 1 processo calculadno cada posição da matriz c.
+        
+                                [ () () () ]
+                                [ () () () ]
+                                [ () () () ]
+
+      - A nova versão do código será:
+
+        | double a[n,n], b[n,n], c[n,n];
+        | co [i=0 to n-1] { # linhas
+        |     co [j=0 to n-1] { # colunas
+        |         c[i,j] = 0.0;
+        |         for [k=0 to n-1] # produto escalar
+        |             c[i,j] = c[i,j] + a[i,k] - b[k,j];
+        |     }
+        | }
+        
+      - Podemos simplificar trocando o primeiro laço por um laço duplo
+        (que, em notação, é o mesmo do anterior, mas simplificado):
+
+        | double a[n,n], b[n,n], c[n,n];
+        | co [i=0 to n-1, j=0 to n-1] { # linhas e colunas
+        |     c[i,j] = 0.0;
+        |     for [k=0 to n-1] # produto escalar
+        |         c[i,j] = c[i,j] + a[i,k] - b[k,j];
+        | }
+
+    - É possível paralelizar o laço mais interno? Se analisarmos duas
+      possíves execuções paralelas, temos:
+        
+        k = 0: c[i,j] = c[i,j] + c[i,0]-c[0,j]
+        k = 1: c[i,j] = c[i,j] + c[i,1]-c[1,j]
+
+      - PROBLEMA: As execuções de ambos têm o conjunto de ESCRITA
+        conflitante. Para ser paralelizado, o conjunto de escrita de 
+        cada processo precisa ser disjunto do conjunto de leitura e 
+        escrita de todos os outros processos.
+
+      - Logo, esse laço NÃO PODE SER PARALELIZADO.
+
+      - Ainda assim, os produtos c[i,k]-c[k,j] poderiam ser 
+        paralelizados. Poderíamos fazer algo para paralelizá-los, mas 
+        de forma prática, é possível que criar processos e juntar 
+        resultados não compense (contra o custo das operações de soma 
+        e multiplicação).
+
+* Paralelismo recursivo
+    - Recursões independentes em algoritmos de divisão e conquista
+      poderma ajudar
+
+    - Cara recursão pode criar processos da mesma forma que as iteções e
+      é igualmente custoso.
+
+    - Ex: área de integral
+        
+           ^                 ~~~~~~     |   Criamos um trapézio que
+           |                / |         |   aproxima a área da curva.
+           |               /~ |         |   
+           |              /   |         |   Criamos dois trapézios
+           |             / ~ /|         |   consecutivos, divididos
+           |            /   / |         |   pelo ponto médio.
+           |           /  ~/  |         |   
+           |  ~~~~    / ~/|   ~         |   Calculamos a área do
+           |~      ~ / ~/ |   |         |   primeiro trapézio e dos
+           |         ~ /  |   |         |   dois trapézios menores.
+           |         |/   |   |         |   
+           |         |    |   |         |   Se a diferença for menor
+           +------------------------->  |   que um épsilon, essa será
+                     a   a+b  b         |   a área.
+                         ¨¨¨            |   
+                          2             |   Senão, repetimos o processo
+                                        |   para o trapézio de maior
+                                        |   área.
+
+* Produtores e consumidores (pipeline)
+    
+    - Melhor exemplo é o | do unix
+    - O próprio SO lida com criar e enviar mensagens
+    
+        >-----. .---------.  .---------. .---------.  .--->
+            | ^ | |     | ^  | |     | ^ | |     | ^  | |
+            |     |     |      |     |     |     |      |
+            |     |     |      |     |     |     |      |
+            |     |     |      |     |     |     |      |
+            '-----'     '------'     '-----'     '------'
+              cat         grep        sed          more
+
+    - NOTA: o problema do produtor/consumidor é tanto um problema
+            quando um paradigma de solução. O problema em si pode
+            ser resolvido com outros paradigmas.
+
+* Cliente e servidor
+
+    - Muito típico de web e SOs
+        
+        | Cliente1 |   \\ requisição1
+                     |\ \\ 
+           resposta1  \\ \|
+                      | Servidor |
+           resposta2   // /|
+                     |/ //
+        | Cliente2 |   // requisição2

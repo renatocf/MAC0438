@@ -1,0 +1,61 @@
+Grep paralelo
+==============
+
+* Como podemos otimizar a criação de processos - em vez de 2 criados
+  em cada iteração do laço, para apenas 2 no total?
+
+* Resolvendo o problema do grep como se dosse um PROBLEMA DO
+  PRODUTOR/CONSUMIDOR.
+
+           ..------------..  ..------------..
+           ||            \/  ||            \/
+        PRODUTOR        | x=86 |       CONSUMIDOR
+                        | x=75 |
+                        | x=65 |
+                        | x=45 |
+                        '------'
+                         BUFFER
+
+* O produtor e o consumidpr avisam um ao outro quando há um item novo e
+  quanto há um espaço no buffer -> enviam um sinal
+    - Temos duas opções: enviar realmente um sinal, ou usar uma variável
+      compartilhada. Para esse problema, usaremos uma variável booleana
+      que servirá para isso.
+
+* Mapeamento do problema no produtor/consumidor:
+    - Consumidor: o processo que busca padrões
+    - Produtor:   o processo que lê novas linhas
+    - Buffer:     próxima linha
+
+    |
+    | string buffer;     # Variável compartilhada entre ambos
+    | bool done = false; # Booleano para indicar que o arquivo acabou.
+    |                    # O produtor sabe (pois ele lê o arquivo), mas
+    |                    # o consumidor, não.
+    |
+    | co # Primerio processo -> Busca padrões (consumidor)
+    |     string linha1;
+    |     while(TRUE) {
+.---:-------> espere até buffer estar cheio ou done == TRUE;
+|   |         if(done) break;
+|   |         linha1 = buffer;
+| .-:-------> sinalize que buffer está vazio;  # 
+| | |         busque por padrão em linha1      # GREP
+| | |         if (padrão em linha1)            # (o restante é parte do
+| | |             write(linha1);               # produtor-consumidor)
+| | |     }
+| | | //  # Segundo processo -> Faz leitura de novas linhas (produtor)
+| | |     string linha2;
+$ % |     while(TRUE) {
+| | |         leia a próxima linha em linha2;  # 
+| | |         if (EOF) {                       # GREP
+| | |             done = TRUE;                 # (o restante é parte do
+| | |             break;                       # produtor-consumidor)
+| | |         }                                # 
+| '-:-------> espera até buffer estar vazio;
+|   |         buffer = linha2;
+'---:-------> sinalize que buffer está cheio;
+    |     }
+
+    $ e % é o que permite a comunicação entre processos junto com a
+    variável vuffer e a variável done que são compartilhados.
