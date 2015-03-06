@@ -1,0 +1,57 @@
+Ações atômicas
+===============
+
+* Uma ação atômica realiza uma transformação de estado de forma
+  indivisível
+    - Ex:
+                .-------------> Não tem como o SO chavear para
+         s0   ------>   s1      outro processo durante a transição
+        x = 4         x = 14
+        y = 2         y = -1
+
+* Estados intermediários não podem ser vistos por outros processos
+    - Uma ação atômica realizada com < ... > pode ter ações atômicas.
+      Estados intermediários são possíveis, mas os outros processos
+      só saberão da transformação do inicial para o final.
+
+* As ações atômicas existentes dependem do hardware
+    - Algumas arquiteturas possuem instruções do tipo 'test and set'
+      (BTS) que realizam uma comparação e atribuição de forma
+      atômica. Nesses hardwares, simular o < if(cond) variável = valor >
+      é bem simples - basta usar uma instrução (de 1 ciclo de
+      processamento).
+
+* O que é atômico (por enquanto):
+    - Atribuição de variáveis simples
+    - Escrita na memórai de um modo geral
+
+    - Ex:
+        | x = y + z   # 2 ações
+        | x = 2       # 1 ação
+
+        - A 1ª ação da linha 1 carrega o valor de y para um registrador.
+        - A 2ª ação da linha 2 soma e guarda o resultado em x.
+
+* Ex:
+    - Quais os possíveis valores de x no fima da execução?
+
+        | int y = 0, z = 0;
+        | co x = y + z;     # P1
+        | // y = 1; z = 2;  # P2
+        | oc
+
+    - Caso 1: 0
+        Se P1 roda completamente antes do P2
+
+    - Caso 2: 1
+        Se P2 começa a rodar só até y = 1 e P1 roda por inteiro
+
+    - Caso 3: 2 (!!)
+        Se P1 coloca o valor de y (que vale 0) no registrador. P2
+        roda por inteiro e P1 termina de rodar por inteiro.
+
+    - Caso 4: 3 (esperado)
+        Se P2 roda por inteiro e P1 roda por inteiro.
+
+* Cada processo tem seu próprio conjunto de registradores (mudança de
+  contexto)

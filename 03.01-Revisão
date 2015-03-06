@@ -1,0 +1,53 @@
+Revisão
+========
+
+* Programas multithread
+    - Geralmente mais processos do que processadores
+    - Gerenciamento de janelas
+    - SIstemas operacionais para múltiplos processadores e de tempo
+      compartilhado
+    - Sistemas de tempo real
+
+* Computação distribuída
+    - Troca de mensagens
+    - Servidores de arquivos
+    - Servidores de web
+        - Em geral, servidores em si já são concorrentes
+    - Veremos APENAS algoritmos para computação distribuída
+
+* Computação paralela
+    - Acelerar a execução de um processo pesado
+    - Computações científicas
+
+* Paradigmas de concorrência
+    - Iterativo (for's trocados por co's)
+    - Recursivo (chamadas recursivas executadas em co's)
+    - Produtores e consumidores (pipelines, com barreiras que permitem
+      que um execute se e somente o outro criou algo)
+    - Clientes e servidores (um servidor atende requisições de clientes)
+    - Interação entre peers (várias máquinas associadas, trocando
+      informações entre si ou por meio de um processo coordenador
+      ou usando uma pipeline circular)
+
+* Sincronização
+    - Em geral, queremos:
+        - Exclusão mútua
+        - Sincronização por condição
+
+* Estado de um programa concorrente
+    - Um conjunto co os valores de todas as variáveis (explícitas e
+      implícitas)
+    - O programa sempre começa em um estado inicial
+    - Cada processo executa de forma independente, variando o estado
+
+    - A execução de um programa concorrente à intercalação de ações
+      atômicas
+    - Uma execução particular é uma história
+        - s0 → s1 → s2 → s3 → ... sN
+    - Uma história pode ser simulada por um programa sequencial
+    
+    - A cada estado, qalquer ação atômica de qualquer processo pode
+      executar
+    - Quantidade imensa de histórias
+    
+    - Restringir as possíveis histórias pois nem todas são sequenciais

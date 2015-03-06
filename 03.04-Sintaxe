@@ -1,0 +1,51 @@
+Sintaxe
+========
+
+* Precisamos de uma gorma para definir expressões como sendo atômicas.
+  Fizemos isso com:
+
+    | < comando1;
+    |   comando2;
+    |   ...
+    |   comandoN; >
+
+    - Essa sintaxe resolve o problema de EXCLUSÃO MÚTUA
+
+* Para fazermos sincronização por condição, usaremos:
+
+          .------------> Espere B ser veradade para rodar
+          |              os comandos de forma atômica
+          |   .--------> Expressão booleana qualquer
+    | < await(B)
+    |   comando1;
+    |   comando2;
+    |   ...
+    |   comandoN; >
+
+    - O processo poderá ser escalonado para rodar. Porém, se a condição
+      do await ("atomic wait") não for verdadeiro, ele é interrompido
+      novamente e outro processo será reescalonado pelo SO. Ele rodará
+      APENAS quando a condição for satisfeita.
+
+    - Propriedades do 'await'
+        - B com certeza será verdade quando S COMEÇAR A SER executado
+        - Nenhum resultado intermediário de S será visto por outros
+          processos se B é falso. Só pode se tornar verdade por ações
+          de outros processos (uma expressão "protegida" por 'await'
+          pode esperar muito).
+
+    - Ex:
+        | < await (s > 0) s = s - 1; >
+        - Esse exemplo é parecido com semáforos
+
+        | < x = x + 1; y = y + 1 >
+        - Esse exemplo introduz exclusão mútua
+
+        | < await (count > 0); >
+        - Esse exemplo é uma barreira de sincronização
+
+    - Uma forma de implementar o "<await (B);>" em software é usando
+      um "while(!B)". Isso funciona se B atender a Propriedade de No
+      Máximo Uma Vez (PNMUV). Porém, ele não é eficiente, porque a
+      thread pode gastar muito tempo fazendo um teste que não mudará
+      (esse é um 'spin loop' ou 'busy waiting').

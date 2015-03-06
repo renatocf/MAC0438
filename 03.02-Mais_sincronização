@@ -1,0 +1,122 @@
+Mais sincronização
+===================
+
+* Por que sincronização?
+    - Problema: Restringir as possíveis histórias do programa
+      concorrente, pois nem todas são desejáveis
+        - Ex: no grep, quando um processo faz a busca e o outro escreve
+              na variável sobre uma linha não lida
+
+    - Solução
+        - Exclusão mútua
+            - Usa ações atômicas de baixo nível para transformar o
+              acesso a seção crítica em uma ação atômica.
+        - Sincronização por condição
+            - Atrasa a execução de um processo até o momento em que
+              ele possa acessar a variável compartilhada
+
+    - Para conseguir exclusão mútua e sincronização por condição,
+      usaremos o 'await'
+
+* Exemplo de sincronização
+
+    - Encontrar o máximo de um vetor (mais um algoritmo concorrente)
+      um vetor a[n] de inteiros positivos
+
+    - Algoritmos sequencial:
+
+        | int m = 0;
+        | for [i = 0 to n-1] {
+        |     if (a[i] > m)
+        |         m = a[i];
+        | }
+        | write(m);
+
+    - 1ª tentativa de paralelização: trocar 'for' por 'co'
+
+        | int m = 0;
+        | co [i = 0 to n-1] {
+        |     if (a[i] > m)
+        |         m = a[i];
+        | }
+        | write(m);
+
+        - Simulando o algoritmo:
+
+                ::  .--------.--------.--------.
+                ::  |   p0   |   p1   |   p2   |   .-> Execução na
+                ::  |========|========|========|   |   memória é ação
+          tempo ::  |if (x>0)|if (x>0)|if (x>0)|   |   atômica. A ordem
+                ::  |--------|--------|--------|   |   definida por
+                ::  | m = 10 | m = 14 | m = 3  | --'   ela pode ser
+                ::  |--------|--------|--------|       arbitrária
+                \/     ....     ....     ....
+
+    - 2ª tentatica: forçar execução do trecho de código ser atômica:
+        - Colocaremos uma nova notação no algoritmo: < ... código ... >
+
+        | int m = 0;
+        | co [i = 0 to n-1] {
+        |     < if (a[i] > m)
+        |           m = a[i]; >
+        | }
+        | write(m);
+
+        - Simulando o algoritmo:
+
+                ::  .--------.--------.--------.
+                ::  |   p0   |   p1   |   p2   |
+                ::  |========|========|========|
+          tempo ::  |if (x>0)|        |        |
+                ::  |--------|--------|--------|
+                ::  | m = 10 |        |        |
+                ::  |========|========|========|
+                ::  |        |        |if(x>10)|
+                ::  |========|========|========|
+                ::  |        |if(x>14)|        |
+                ::  |--------|--------|--------|
+                ::  |        | m = 14 |        |
+                ::  |--------|--------|--------|
+                \/     ....     ....     ....
+
+        - Esse programa compensa? NÃO, pois a execução, afinal, foi
+          SEQUENCIAL. Agora, temos várias ordens possíveis de testes,
+          mas só perdemos ao ter de criar todo o mecanismo de criar
+          a atomicidade para o trecho do código (com semáforos, por
+          exemplo).
+
+    * 3ª tentativa: double check
+
+        | int m = 0;
+        | co [i = 0 to n-1] {
+        |     if (a[i] > m)
+        |         < if (a[i] > m)
+        |             m = a[i]; >
+        | }
+        | write(m);
+
+        - Nesse caso, podemos ter benefícios. A primeira comparação pode
+          ser feita em paralela, mas a comparação + atribuição de
+          verdade é atômica. Se um valor inicial for grande, vários
+          outros valores, executados em paralelo, pararão a execução
+          assim que houver o 1º teste. Se um deles entrar, teremos o
+          teste novamente - só se ele for realmente maior, será
+          atribuído.
+
+        - Considerando vetores aleatórios, quase 50% dos valores poderão
+          ser excluídos sem fazer a atribuição.
+
+        - Simulando o algoritmo:
+
+                ::  .--------.--------.--------.
+                ::  |   p0   |   p1   |   p2   |
+                ::  |========|========|========|  .-> Se o vetor fosse
+          tempo ::  |        |if (x>0)|        |  |   muito grande e
+                ::  |--------|--------|--------|  |   tivermos várias
+                ::  |        |if (x>0)|        |  |   threads, estamos
+                ::  |--------|--------|--------|  |   poupando várias
+                ::  |        | m = 14 |        |  |   instruções. No
+                ::  |========|========|========|  |   pior caso, a
+                ::  |if(x>14)|        |if(x>10)| -'   execução será
+                ::  |========|========|========|      sequencial.
+                \/     ....     ....     ....
