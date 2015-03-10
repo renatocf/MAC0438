@@ -1,0 +1,151 @@
+Mais sobre ações atõmicas
+==========================
+
+* Se tivermos anotação:
+    < comando1;    }
+      comando2;    } Uma sequễncia de comandos desta forma é
+      comando3;    } equivalente a uma ação atômica
+      comando4; >  } - NÃO POR SER FEITO EM UM ÚNICO CICLO DE CPU
+                     - Porque o SO nunca vai chavear para outro
+                       processo enquanto estiver aqui
+
+* Seria interessante usarmos o <> só quando, de fato, for necessário
+    - Podemos tirar proveito do paralelismo e proteger o algoritmo
+      de ter um valor de variável indesejado.
+
+* Propiedade No Máximo Uma Vez (PNMUV)
+
+    - Referência crítica: é quando há referência à uma variável que
+      é modificada por outro processo.
+
+    - 'x = e' satisfaz a PNMUV sse:
+        - 'e' contém no máximo 1 referência crítica e x não é lida
+              por outro processo
+        - 'e' não contém referências críticas
+
+    - Nesse caso, a expressão equivale a uma ação atômica
+      (e não precisa de proteção)
+
+    - Exemplo:
+        
+        | int x = 0, y = 0;
+        | co x = x+1; # 1. 0 referências críticas (2. segue PNMUV)
+        | // y = y+1; # 1. 0 referências críticas (2. seque PNMUV)
+        | oc;
+
+        - Para analisarmos se o programa precisa de proteção,
+          precisamos ver se as expressões respeitam a PNMUV. Para
+          tanto, temos:
+          1. Contar o número de referências críticas de cada processo.
+          2. Analisar se as expressões com referências críticas
+             respeitam a PNMUV.
+
+        - Nesse caso, como não há referências críticas, a solução já
+          está correta, sem necessidade de usar <>.
+        - É impossível chegar em estados indesejados.
+    
+    - Exemplo:
+        
+        | int x = 0, y = 0;
+        | co x = y + 1; # 1. 1 referência crítica
+        |               # 2. x não é lido por outro processo
+        |               #    + expressão só tem 1 referência crítica
+        |               #    → segue a PNMUV
+        | // y = y + 1; # 1. 0 referências crísticas
+        |               # 2. Segue a PNMUV
+        | oc;
+        
+        - Mesmo com interrupções, sempre teremos os dois estados
+          possíveis esperados na execução paralela:
+
+                      .-------.                    .-------.
+            x = 0+1 → | x = 1 |          y = 0+1 → | y = 1 |
+            y = 0+1 → | y = 1 |          x = 1+1 → | x = 2 |
+                      '-------'                    '-------'
+
+    - Exemplo:
+
+        | int x = 0, y = 0;
+        | co x = y + 1; # 1. 1 referência crítica
+        |               # 2. x É LIDO por outro processo
+        |               #    → não segue a PNMUV
+        | // y = x + 1; # 1. 1 referência crítica
+        |               # 2. y É LIDO por outro processo
+        |               #    → não segue a PNMUV
+        | oc;
+
+        - Como não temos a PNMUV em ambos os processos, DEVEMOS proteger
+          ambas as expressões inseguras:
+        
+        | int x = 0, y = 0;
+        | co < x = y + 1 >;
+        | // < y = x + 1 >;
+        | oc;
+
+* Se não temos a PNMUV, precisamos usar:
+    - <>
+      → ação atômica incondicional (exclusão mútua)
+
+    - <await (B) comando1, comando2, ..., comandoN>
+      → ação atômica condicional (sincronização por condição)
+    
+    - <await (B);> → while(!B)
+      - Podemos fazer a implementação usando o 'while', se B.
+        respeitar a PNMUV. Ela não é a mais eficiente, pois
+        há desperdício de ciclos de processamento.
+      - Em geral, o ideal é suspender o processo logo ao ver que
+        a condição B não é respeitada, dando oportunidade para
+        outros processos rodarem.
+
+* Produtor/consumidor com await
+    
+    - 1ª versão:
+
+        | int buf, p = 0, c = 0;
+        | process Producer {
+        |   int a[n];
+        |   while (p < n) {
+        |     buf = a[p];
+        |     p = p+1;
+        |   }
+        | }
+        | 
+        | process Consumer {
+        |   int b[n];
+        |   while (c < n) {
+        |     b[c] = buf;
+        |     c = c+1;
+        |   }
+        | }
+
+        - Esse programa NÃO FUNCIONA. Queremos, no final, que o vetor
+          do consumidor seja IGUAL ao vetor do produtor. Da forma como
+          está implementado, podemos rodar o produtor várias vezes,
+          substituindo os valores no buffer sem que o consumidor os
+          copie para o seu vetor.
+        - Precisamos adicionar alguma CONDIÇÃO que garanta que ao
+          produzir, o consumidor consuma antes do produtor colocar
+          um novo valor no buffer.
+
+    - 2ª versão:
+
+        | int buf, p = 0, c = 0;
+        | process Producer {
+        |   int a[n];
+        |   while (p < n) {
+        |     <await (c == p)> # esperando o consumidor consumir
+        |     buf = a[p];
+        |     p = p+1;
+        |   }
+        | }
+        | 
+        | process Consumer {
+        |   int b[n];
+        |   <await (c < p)> # esperando o produtor produzir
+        |   while (c < n) {
+        |     b[c] = buf;
+        |     c = c+1;
+        |   }
+        | }
+        
+        - Os await's garantem a execução correta de ambos os processos

@@ -1,0 +1,34 @@
+Problema da seção crítica
+==========================
+
+* Temos 'n' processos que repetidamente executam uma seção de código
+  crítica (ex: variável compartilhada) e uma seção de código não crítica.
+
+* Podemos descrever os processo, de uma forma alto nível, como:
+
+    | process SC[i=1 to n] {
+    |     while(true) {
+    |         protocolo de entrada; # para entrar na seção crítica
+    |         SEÇÃO CRÍTICA; # não pode ter mais de um processo
+    |                        # rodando ao mesmo tempo
+    |         protocolo de saída; # para sair da seção crítica
+    |         SEÇÃO NÃO CRÍTICA;
+    |     }
+    | }
+
+    - Poderíamos tentar resolver o problema colocando <> em torno
+      do protocolo de entrada + SEÇÃO CRÍTICA. Porém, veremos que
+      essa solução não é suficiente para conseguirmos as propriedades
+      necessárias para resolver o problema da seção crítica.
+
+* Para uma solução resolver o problema da seção crítica, ela precisa
+  seguir 4 propriedades:
+    - Exclusão mútua
+        - Só um processo entra na região num dado momento.
+    - Ausência de deadlocks (livelocks)
+        - Dois processos não ficam esperando por condiçẽos um do outro,
+          impedindo que ambos rodem.
+    - Ausência de espera desnecessária
+        - Não desperdiçaremos tempo para conseguir resolver.
+    - Entrada garantida
+        - Todos os processos têm chance de rodar em algum momento.

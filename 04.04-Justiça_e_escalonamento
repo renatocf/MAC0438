@@ -1,0 +1,92 @@
+Justiça e Escalonamento
+========================
+
+* Suponhamos o seguinte programa. Ele termina?
+    
+    | bool continue = true;
+    | co while (continue);
+    | // continue = false;
+    | oc;
+    
+    - Assumindo que todos os processos tenham chance de rodar,
+      ele SEMPRE termina. Se o 2º processo rodar, assim que o 1º
+      for escalonado o programa termina. Caso contrário, podemos
+      ficar MUITO tempo no 1º processo, mas quando o 2º for escalonado
+      (e por hipótese, será), ele termina.
+
+    - Se estivermos numa máquina simples em que o escalonamento só se
+      der quando um processo termina (ou, explicitamente, desiste de
+      rodar para dar chance a outros), pode ser que ele nunca termine.
+
+* Justiça: existem 3 níveis:
+
+    - Incondicional
+        1. Cada ação atômica incondicional ELEGÍGEL é executada alguma
+           hora.
+            - ELEGÍVEL é a próxima ação a eser executada se o processo
+              for sequencial.
+
+        - A justiça incondicional NÃO funciona para o await.
+        - Ex:
+            | co AA1; # Todas as ações atômicas serão executadas
+            |    AA2; # pelo menos uma vez
+            | // AA3;
+            |    AA4;
+            | oc
+
+    - Fraca
+        1. Segue a justiça incondicional.
+        2. Cada <await (B) > executa se B ficar verdade até ser
+           visto pelo processo.
+
+        - Ex:
+            | co AA1; B = true;          | co AA1; B = true;
+            |    AA2;                    |    AA2;
+            | // AA3;                    | // AA3; B = false;
+            |    AA4;                    |    AA4;
+            | // <await (B)>             | // <await (B)>
+            |    AA5;                    |    AA5;
+            | oc                         | oc
+
+            - Segue a justiça fraca:     - Esse nível de justiça
+              await rodará se B ficar      não garante que B roda
+              verdade                      SEMPRE. Se o escalonador
+                                           rodar o 1º processo
+                                           inteiro e depois o 2º,
+                                           o 3º NUNCA rodará
+
+        - Ex:
+            | bool continue = true, try = false;
+            | co while (continue) { try = true; try = false; }
+            | // <await (try) continue = false;>
+            | oc;
+
+            - Nesse exemplo (esquisito) dependemos da sorte de o
+              escalonador interromper o 1º processo e passar para o 2º
+              entre as duas expressões que assinalam 'try'. Porém,
+              pode ser que o 2º processo NUNCA execute. O escalonador,
+              por dar apenas a garantia da justiça FRACA, não precisa
+              parar nesses pontos.
+
+    - Forte
+        1. Segue a justiça incondicional.
+        2. Cada <await (B)> execute mesmo que B fique comutando entre 
+           true e false.
+
+        - Ex:
+            | bool continue = true, try = false;
+            | co while (continue) { try = true; try = false; }
+            | // <await (try) continue = false;>
+            | oc;
+
+            - Sob a perspectiva da justiça forte, temos que o
+              2º processo sempre roda.
+
+        - A justiça forte é muito teórica: o SO não tem como olhar para
+          qualquer programa e garantir que todos os processos rodarão
+          em algum momento...
+
+        - Em geral, criaremos algoritmos supondo que a justiça é forte.
+          Depois, tentaremos "consertar" o algoritmo para que ele
+          rode com a justiça fraca (que é a mais comum em quase todos
+          os algoritmos).

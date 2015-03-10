@@ -1,0 +1,22 @@
+Histórias e propriedades
+=========================
+
+* Propriedades
+    - Atributo que é verdade para todas as histórias de um programa
+      concorrente
+    - Prorpeidades são difíceis de provar na maioria das vezes porque
+      pode exigir a simulação de todas as possíveis histórias
+    - ex:
+        - Programa termina
+          → nunca vai entrar em loop infinito
+          → todos os <await (B); ...> vão ter chance de rodar 
+            alguma hora
+        - Programa nunca entra em um estado ruim (relativo)
+          - programas que exijam exclusão mútua mas não sejam
+            protegidos corretamente
+          - ex: <await (s > 0) s = s - 1>
+            Se o 's' nunca está negativo (em nenhuma história), o
+            programa SEMPRE executará esse await. Se s sempre for
+            positivo para todas as histórias, essa será uma propriedade
+
+    - Conceitos de Liveness e Safety (apresentados no livro)

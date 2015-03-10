@@ -1,0 +1,53 @@
+Revisão
+========
+
+* Ações atômicas
+    - Ações indivisóveis que verificam ou mudam o estado do programa.
+    - Cada comando do processo é um conjunto de ações atômicas.
+    - Nem toda expressão (pequena) só tem uma ação atômica. Por exemplo,
+      o comando 'x++'.
+
+* Histórias
+    - A execução de um programa ocncorrente corresponde à intercaça~ao
+      de ações atômicas.
+    - Uma execução particular é uma história.
+    - Uma história pode ser simulada por um programa sequencia,
+      calculando todas as histórias possíveis e escolhendo uma delas
+      aleatoriamente.
+
+* Sincronização
+    - Na maioria das vezes, não podemos executar quaisquer histórias.
+    - Exclusão mútua e sincronização por condição servem para restringir
+      a existência de histórias indesejadas.
+
+* Máximo de um vetor
+    - Para máxima otimização, usamos a técnica de 'double-if': um if
+      executado em paralelo (para eliminar casos com velocidade) e um
+      atômico para GARANTIR que o valor será maior que o máximo atual
+
+    - Versão final:
+        | int m=0;
+        | co [i=0 to n-1] {
+        |   if (a[i] > m)
+        |     <if (a[i] > m)
+        |        m = a[i];>
+        | }
+    
+    - A distribuição de elemenos no vetor, claro, ajuda
+
+* Resumo sobre sincronização
+    - Processos que lêem e escrvem em variáveis compartilhadas
+      geralmente precisam de sincronização
+    - Ações atômicas podem ser expressas com <>
+    - A dupla checagem pode ser útil para farantir a corretude e, ainda,
+      aproveitar um pouco de paralelismo
+
+* Ações atômicas e soncronização
+    - Para ações atômicas básicas: <>
+    - Para colocar uma condição (sincronização por condição),
+      temos o 'await': <await (B) S;>
+      - B com certeza será vendade quando S for executado
+    - Exemplos:
+        - <await (s > 0) s = s - 1;
+        - <S;>                       # ação atômica simples
+        - <await (count > 0);>       # faz programa esperar por condição
