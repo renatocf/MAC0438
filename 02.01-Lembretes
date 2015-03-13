@@ -3,8 +3,8 @@ Lembretes
 
 * Sincronização
     - Necessária para manter a "cooperação"
-    - Exclusão mútua: seções críticasnão são executadas ao mesmo tempo
-    - Sincrinização por condição: um processo é atrasado até que uma
+    - Exclusão mútua: seções críticas não são executadas ao mesmo tempo
+    - Sincronização por condição: um processo é atrasado até que uma
       condição seja verdade
     - Exemplo do produtor/consumidor (um consumidor não pode consumir o
       item antes do produtor produzí-lo).
@@ -27,12 +27,12 @@ Lembretes
                [CPU]               [CPU] 
 
 * Sintaxe
-    | process iteracao[i=1 to n] { # process precisa de um nome
+    | process iteracao[i=1 to n] { # 'process' precisa de um nome
     |   write(i);                  # Cria 'n' processos, e 'comando'
     | }                            # é executado no processo original
     | comando
 
-    | co[i=1 to n] {               # comando é executado apenas quando
+    | co[i=1 to n] {               # 'comando' é executado apenas quando
     |   write(i)                   # os 'n' processo criados por 'co'
     | }                            # terminarem
     | comando
