@@ -29,6 +29,7 @@ Problema da seção crítica
         - Dois processos não ficam esperando por condiçẽos um do outro,
           impedindo que ambos rodem.
     - Ausência de espera desnecessária
-        - Não desperdiçaremos tempo para conseguir resolver.
+        - Não desperdiçaremos tempo para conseguir resolver
+          o problema de exclusão mútua.
     - Entrada garantida
         - Todos os processos têm chance de rodar em algum momento.
