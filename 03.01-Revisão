@@ -13,10 +13,10 @@ Revisão
     - Servidores de arquivos
     - Servidores de web
         - Em geral, servidores em si já são concorrentes
-    - Veremos APENAS algoritmos para computação distribuída
+    - Veremos apenas ALGORITMOS para computação distribuída
 
 * Computação paralela
-    - Acelerar a execução de um processo pesado
+    - Acelerar a execução de um processamento pesado
     - Computações científicas
 
 * Paradigmas de concorrência
@@ -35,7 +35,7 @@ Revisão
         - Sincronização por condição
 
 * Estado de um programa concorrente
-    - Um conjunto co os valores de todas as variáveis (explícitas e
+    - Um conjunto com os valores de todas as variáveis (explícitas e
       implícitas)
     - O programa sempre começa em um estado inicial
     - Cada processo executa de forma independente, variando o estado
@@ -46,8 +46,9 @@ Revisão
         - s0 → s1 → s2 → s3 → ... sN
     - Uma história pode ser simulada por um programa sequencial
     
-    - A cada estado, qalquer ação atômica de qualquer processo pode
+    - A cada estado, qualquer ação atômica de qualquer processo pode
       executar
     - Quantidade imensa de histórias
     
-    - Restringir as possíveis histórias pois nem todas são sequenciais
+    - Em geral, queremos restringir as possíveis histórias, pois nem
+      todas resolvem o problema que desejamos.
