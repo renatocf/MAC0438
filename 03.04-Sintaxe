@@ -1,7 +1,7 @@
 Sintaxe
 ========
 
-* Precisamos de uma gorma para definir expressões como sendo atômicas.
+* Precisamos de uma forma para definir expressões como sendo atômicas.
   Fizemos isso com:
 
     | < comando1;
@@ -30,7 +30,7 @@ Sintaxe
     - Propriedades do 'await'
         - B com certeza será verdade quando S COMEÇAR A SER executado
         - Nenhum resultado intermediário de S será visto por outros
-          processos se B é falso. Só pode se tornar verdade por ações
+          processos. Se B é falso, só pode se tornar verdade por ações
           de outros processos (uma expressão "protegida" por 'await'
           pode esperar muito).
 
@@ -45,7 +45,7 @@ Sintaxe
         - Esse exemplo é uma barreira de sincronização
 
     - Uma forma de implementar o "<await (B);>" em software é usando
-      um "while(!B)". Isso funciona se B atender a Propriedade de No
-      Máximo Uma Vez (PNMUV). Porém, ele não é eficiente, porque a
+      um "while(!B)". Isso funciona se B atender a Propriedade de "No
+      Máximo Uma Vez" (PNMUV). Porém, ele não é eficiente, porque a
       thread pode gastar muito tempo fazendo um teste que não mudará
       (esse é um 'spin loop' ou 'busy waiting').
