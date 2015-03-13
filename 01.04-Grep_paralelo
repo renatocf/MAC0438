@@ -12,7 +12,7 @@ Paralelizando o grep
     |     search pattern in 'line';
     |     if (pattern is in 'line')
     |         write 'line';
-    |     read line from 'stdlin' and store in 'line';
+    |     read line from 'stdin' and store in 'line';
     | }
 
 * Quando paralelizar:
@@ -77,11 +77,9 @@ Paralelizando o grep
         |     'line1' = 'line2'
         | }
         
-        - Problema: agora, temos a atualização
-        
-        - Compensa? Depende
+        - Problema: agora, temos a atualização. Mas Compensa? Depende
             - A cada laço estamos criando e destruindo processos.
-              Isso pode ser LENTO. Como tiramos o 'co' de dentro
-              do while? Assim criamos os processos apenas uma vez.
-            - Se copiar for uma operação lenta, pode ser que
-              não compense.
+              Isso pode ser LENTO. Podemos tirar o 'co' de dentro
+              do while? Assim criaríamos os processos apenas uma vez.
+            - Se copiar strings for uma operação lenta, pode ser que
+              fazer desta maneira não compense.
