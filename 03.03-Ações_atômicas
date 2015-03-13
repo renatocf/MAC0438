@@ -23,14 +23,14 @@ Ações atômicas
 
 * O que é atômico (por enquanto):
     - Atribuição de variáveis simples
-    - Escrita na memórai de um modo geral
+    - Escrita na memória de um modo geral
 
     - Ex:
         | x = y + z   # 2 ações
         | x = 2       # 1 ação
 
         - A 1ª ação da linha 1 carrega o valor de y para um registrador.
-        - A 2ª ação da linha 2 soma e guarda o resultado em x.
+        - A 2ª ação da linha 1 soma e guarda o resultado em x.
 
 * Ex:
     - Quais os possíveis valores de x no fima da execução?
