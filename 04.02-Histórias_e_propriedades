@@ -4,8 +4,8 @@ Histórias e propriedades
 * Propriedades
     - Atributo que é verdade para todas as histórias de um programa
       concorrente
-    - Prorpeidades são difíceis de provar na maioria das vezes porque
-      pode exigir a simulação de todas as possíveis histórias
+    - Propriedades são difíceis de provar na maioria das vezes porque
+      podem exigir a simulação de todas as possíveis histórias
     - ex:
         - Programa termina
           → nunca vai entrar em loop infinito
