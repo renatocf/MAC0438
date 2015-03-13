@@ -20,7 +20,7 @@ Mais sobre ações atõmicas
 
     - 'x = e' satisfaz a PNMUV sse:
         - 'e' contém no máximo 1 referência crítica e x não é lida
-              por outro processo
+              por outro processo; ou
         - 'e' não contém referências críticas
 
     - Nesse caso, a expressão equivale a uma ação atômica
@@ -141,8 +141,8 @@ Mais sobre ações atõmicas
         | 
         | process Consumer {
         |   int b[n];
-        |   <await (c < p)> # esperando o produtor produzir
         |   while (c < n) {
+        |     <await (c < p)> # esperando o produtor produzir
         |     b[c] = buf;
         |     c = c+1;
         |   }
