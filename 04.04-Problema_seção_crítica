@@ -28,6 +28,10 @@ Problema da seção crítica
     - Ausência de deadlocks (livelocks)
         - Dois processos não ficam esperando por condiçẽos um do outro,
           impedindo que ambos rodem.
+        - Deadlock: processo travado sem fazer nada (esperando algum
+          recurso que seja de outro processo).
+        - Livelock: processo travado gastando tempo de CPU (ex: com
+          busy waiting, parado num <await> implementado com laço).
     - Ausência de espera desnecessária
         - Não desperdiçaremos tempo para conseguir resolver
           o problema de exclusão mútua.
