@@ -1,16 +1,18 @@
 Classes de aplicações
 ======================
 
-* Geralmente, temos mais processos do que processadores
+* Existem várias aplicações para a programação concorrente
+
+* Em geral, as máquinas possuem mais processos do que processadores
     - Gerenciamento de janelas (só uma janela já pode ter múltiplos
       processos).
     - Sistemas operacionais para múltiplos processadores, com
       tempo compartilhado (o tempo de execução de cada processador
       será dividido entre diferentes processos, que precisam "brigar"
-      pelo tempo de processamento. Até mesmo escolher qual processo
-      irá rodar toma tempo).
-    - Sistemas de tempo real (alguma execução PRECISA ser executado
-      até certo tempo).
+      pelo tempo de processamento. Até mesmo escolher qual o processo
+      que irá rodar consome tempo).
+    - Sistemas de tempo real (alguma programa PRECISA ser executado
+      dentro de um limite de tempo).
 
 * Computação distribuída
     - Troca de mensagens    }
