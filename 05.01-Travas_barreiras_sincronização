@@ -1,0 +1,273 @@
+Travas e barreiras de sincronização
+====================================
+
+* Soluções para o problema da seção crítica
+
+    - Solução trivial: colocar <> na seção crítica inteira
+        - A exclusão mútua vem da definição de <>
+        - Essa solução só direciona um problema para outra
+          área: como implementar < e >?
+        - É interessante colocar isso nas menores regiões o possível,
+          e aproveitar-se do paralelismo nos outros casos
+
+    - Segunda solução
+        - Vamos começar com < e > mas não na seção crítica inteira.
+        - Pensaremos, primeiro, apenas na propriedade de exclusão mútua,
+          e depois partiremos para ver as outras.
+        - Também começaremos com uma solução para 2 processo, e
+          eventualmente generalizaremos para N.
+            - ex: 1 produtor e 1 consumidor, 3 filósofos, etc.
+
+    - Como indicar que um processo está na Seção Crítica (SC)?
+        - Sejam CS1 e CS2 dois processos
+        - Vamos utilizar duas variáveis in1 e in2, que serão verdade se
+          CS1 e CS2 estiverem na seção crítica, respectivamente.
+            - CS1 na SC → in1 = true
+            - CS2 na SC → in2 = true
+
+    - Queremos evitar 'in1 == true' e 'in2 == true'
+
+    - Uma vez definido o que queremos, precisamos criar os protocolos
+      de entrada e saída da seção crítica. Como especificar estes
+      protocolos?
+        - Protocolo de entrada
+            1. Precisa verificar se a variável booleana do outro
+               processo é 'true'.
+            2. Deve atribuir 'true' para a variável booleana
+               correspondente.
+        
+        - Protocolo de saída
+            2. Deve atribuir 'false' para a variável booleana
+               correspondente.
+    
+    - Terceira solução: Como representar no algoritmo?
+        
+        - Ideia primitiva:
+
+            | process CS1 {
+            |   while (true) {
+            |     if (in2 == false)
+            |         // SC
+            |       else
+            |         if (in2 == false)
+            |           // SC
+            |         else
+            |           if (in2 == false)
+            |             // SC
+            |           else
+            |             ... // continuamos o processo
+            |                 // (devemos fazer um laço!)
+            |   }
+            | }
+
+        - Implementação (incompleta):
+
+            | process CS1 {
+            |   while (true) {
+            |     while (in2 == true);
+            |     // SC
+            |   }
+            | }
+            |
+            | process CS2 {
+            |   while (true) {
+            |     while (in1 == true);
+            |     // SC
+            |   }
+            | }
+
+        - Precisamos, ainda, sinalizar para o outro processo
+          que cada um está na região crítica
+
+            | process CS1 {
+            |   while (true) {
+            |     while (in2 == true);
+            |     in1 = true; // entra na SC
+            |     SC
+            |     in1 = false; // sai da SC
+            |   }
+            | }
+            |
+            | process CS2 {
+            |   while (true) {
+            |     while (in1 == true);
+            |     in2 = true; // entra na SC
+            |     // SC
+            |     in2 = false; // sai da SC
+            |   }
+            | }
+
+            - Essa versão AINDA tem um problema: se o CS1 for
+              executado e passar pelo laço, mas for interrompido,
+              CS2 poderá ver in1 == false e entrar na seção crítica. 
+              Assim, temos 2 processos na SC. Justamente o que não
+              queríamos...
+
+            - Precisamos que a comparação + atribuição seja atômica.
+              Podemos usar o <await>. Essa solução parece que recai
+              na outra solução básica. Porém, evitamos que outros
+              processamentos na SC (como IO) sejam atômicos,
+              desperdiçando a capacidade da CPU de fazer outras coisas
+              enqunto estão lá.
+
+        - Solução (completa):
+
+            | bool in1 = false, in2 = false;
+            |
+            | process CS1 {
+            |   while(true) {
+            |     <await (in2 == true) in1 = true; > // protocolo 
+            |                                        // de entrada
+            |     SC
+            |     in1 = false; // protocolo de saída
+            |     SNC // seção não crítica
+            |   }
+            | }
+            |
+            | process CS2 {
+            |   while(true) {
+            |     <await (in1 == true) in2 = true; > // protocolo
+            |                                        // de entrada
+            |     // SC
+            |     in2 = false; // protocolo de saída
+            |     SNC // seção não crítica
+            |   }
+            | }
+
+    - A solução segue as 4 propriedades?
+        - Exclusão mútua
+          → SIM, por construção
+
+        - Ausência de deadlock
+          → SIM, porque un1 e un2 nunca serão verdade ao mesmo
+            tempo.
+
+        - Ausência de atrasos desnecessários (código fora da SC
+          influencia em rodar a SC)
+          → SIM, considerando que in1 e in2 sejam usadas apenas nos
+            protocolos de entrada e saída.
+
+        - Entrada garantida
+          - NÃO, pois um processo pode "correr" mais rápido que o
+            outro na frente para tester o in1/in2.
+          - Isso acontece porque, em condições normais,
+            processadores possuem JUSTIÇA FRACA. Não há garantia de
+            que um processo será rodado quando a condição para que
+            ele entre na seção crítica seja verdadeira.
+          - O fato de um processo 'correr' cria as chamadas
+            'condições de corrida' (race conditions).
+
+    - De forma geral, estudaremos formas de resolver o problema da
+      entrada garantida.
+
+    - No início, fizemos 3 restrições:
+        1. Começar com < e >, mas não na seção crítica inteira.
+        2. Pensar apenas na propriedade de exclusão mútua e depois 
+           partir para ver as outras.
+        3. Começar com uma solução para 2 processo, e eventualmente 
+           generalizar para N.
+    
+    - Nossa solução eliminou a cinfição 1. Vamos generalizá-la e remover
+      a solução 3 (escrevendo o processo para a solução 3).
+        - Uma primeira ideia é usarmos um vetor de variáveis booleanas
+          in[n] (de in[0] a in[n-1]).
+        - Porém, termos tantas variáveis é ruim... Podemos alterar para
+          usar apenas uma variável?
+            - Sim! Mudaremos a pergunta 'SC1 está na seção crítica?' 
+              (para SC2) e 'SC2 está na seção crítica?' (para SC1) 
+              para 'existe alguém na seção crítica?' (para qualquer SCn).
+        - Criaremos uma variável 'lock' que é o mesmo que um ou lógico
+          de todas as variáveis booleanas:
+            - lock = (in1 || in2 || ... || inn)
+        
+        - Reescrevendo o algoritmo, obtemos:
+
+            | bool lock = false;
+            | 
+            | process CS [i=1 to n] {
+            |   while (true) {
+            |     <await (!lock) lock = true; > // protocolo 
+            |                                   // de entrada
+            |     SC
+            |     lock = false; // protocolo de saída
+            |     SNC // seção não crítica
+            |   }
+            | }
+
+    - Quarta solução
+        - Queremos tornar o algoritmo possível
+            - Estamos "rouvando" quando usamos < e >
+
+        - Solução (incorreta):
+
+            | while (lock == true;
+            | lock = true;
+
+            - PROBLEMA: Temos 2 ações atômicas que poder não ser 
+              executadas em sequência
+
+        - Solução (correta):
+            
+            - Podemos supor que existe uma instrução que testa uma
+              variável e atribuir um valor a essa variável:
+            - Instrução 'Test-and-Set': lê e salva o conteúdo de uma
+              variável e modifica o valor em variável de forma atômica.
+                - Chamaremos esta instrução de TS.
+
+                - Pseudocódigo da instrução de hardware:
+                    
+                    | bool TS (bool *lock) {
+                    |   < bool inicial = *lock;
+                    |     *lock = true;
+                    |     return inicial; >
+                    | }
+
+            - Traduzindo para o problema da SC, temos:
+
+                | bool lock = false;
+                | process CS [i=1 to n] {
+                |   while (true) {
+                |     while (TS(lock)) skip; // skip: instrução para
+                |                            // fazer nada
+                |     // SC
+                |     lock = false;
+                |     // SNC
+                | }
+
+            - Em geral, a maioria dos processadores tem alguma instrução
+              similar a isso, pois esse problema é simples.
+
+            - Em soluções com spin-lock (que ficam esperando até a
+              condição ser atendida), o protocolo de saída só precisa 
+              retornar lock para o valor inicial.
+
+            - Na arquitetura x86, a instrução assembly para isso
+              é chamada 'bts'.
+
+    - Quinta solução
+        - Podemos tentar diminuir o efeito de contenção de memória
+          (toda vez que TS faz atribuições, estamos revalidando
+          a cache, o que gasta tempo à toa).
+        - O problema é que 'lock' é atribuido com 'true' "o tempo todo"
+        - Quando precisamos fazer 'lock = true'? APENAS se tivermos
+          'lock = false'.
+        
+        - Como podemos fazer a modificação?
+            
+            | while (lock) skip;
+            | while (TS(lock)) { while (lock) skip; }
+
+        - TS fica atualizando cache. Então o while somente com o teste
+          só faz leitura - economizando operações de escrita.
+
+        - Precisamos que o segundo laço tenha o 'while (lock)' porque,
+          entre a primeira e a segunda linha, 'lock' pode voltar a
+          ser 'true'.
+
+        - Repetimos, então, os testes com laço apenas, até que
+          obtenhamos outro 'false'.
+
+        - Esse processo seria equivalente a fazer um do-while (que, até
+          o momento, não consideramos que existe no nosso pseudo-C):
+
+            | do { while (lock) skip; } while (TS(lock));
