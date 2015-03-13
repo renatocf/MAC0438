@@ -61,7 +61,7 @@ Introdução
   multiprocessadas. O estudo de clusteres é de estudo de redes e
   programação paralela.
 
-* Suponhmos que existam duas variáveis: x1 e x2. x1 pode ser acessada
+* Suponhamos que existam duas variáveis: x1 e x2. x1 pode ser acessada
   apenas do processador 1, e x2, apenas no processador 2. Dois processos
   Y e Z podem precisar de ambos. Na nossa analogia, para 'trocar de
   faixa', pode haver colisões (problema com acesso a variáveis). 
@@ -113,13 +113,13 @@ Introdução
           Um processo esspera até uma condição ser TRUE. Ela também
           é usada para evitar acesso a variáveis compartilhadas.
           - Na analogia, a sincronização por condição é como
-            uma seta.
+            um carro dando seta.
 
 * Exemplo: problema do produtor-consumidor
     
          .--------------.  
          | produtorOK   | Variáveis para controlar a sincronização
-         | consumidorOK | fazem parte do protocolo
+         | consumidorOK | (fazem parte do protocolo)
          '--------------' 
     
                 PRODUTOR ---------.   .------> CONSUMIDOR
