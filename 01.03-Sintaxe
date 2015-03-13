@@ -46,7 +46,7 @@ Sintaxe
         | comando7; } 4º processo (original)
         
         - Dentro dos comandos criados pelo 'co', a execução será
-          sequencial (ao menos que criarmos outros processos com 'co').
+          sequencial (exceto se criarmos outros processos com 'co').
         - O 'comando7' será, necessariamente, executado após os outros
           3 serem executados.
     
@@ -61,10 +61,12 @@ Sintaxe
         
         - Os comandos subsequentes continuam a ser executados em
           paralelo com os n processos.
+        - O comando 'process' sempre precisa de um nome para os
+          processos que serão gerados (nesse caso, 'iteracao').
     
-    - Apesar de 'co' e 'process' imprimirem os valores de 1 a n de
-      forma paralela sem ordem definida, eles não impõem nenhuma
-      sincronização que consiga resolver os problemas.
+    - 'co' e 'process' imprimirem os valores de 1 a n de
+      forma paralela, sem ordem definida. Eles não impõem nenhuma
+      sincronização que consiga resolver problemas.
     
     - 'co' impõe, na verdade, apenas 1 sincronização: o processo
       original continuará APENAS QUANDO OS OUTROS TERMINAREM.
