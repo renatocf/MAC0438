@@ -2,16 +2,16 @@ Revisão
 ========
 
 * Ações atômicas
-    - Ações indivisóveis que verificam ou mudam o estado do programa.
+    - Ações indivisíveis que verificam ou mudam o estado do programa.
     - Cada comando do processo é um conjunto de ações atômicas.
     - Nem toda expressão (pequena) só tem uma ação atômica. Por exemplo,
       o comando 'x++'.
 
 * Histórias
-    - A execução de um programa ocncorrente corresponde à intercaça~ao
+    - A execução de um programa concorrente corresponde à intercalação
       de ações atômicas.
     - Uma execução particular é uma história.
-    - Uma história pode ser simulada por um programa sequencia,
+    - Uma história pode ser simulada por um programa sequencial,
       calculando todas as histórias possíveis e escolhendo uma delas
       aleatoriamente.
 
@@ -36,10 +36,10 @@ Revisão
     - A distribuição de elemenos no vetor, claro, ajuda
 
 * Resumo sobre sincronização
-    - Processos que lêem e escrvem em variáveis compartilhadas
+    - Processos que lêem e escrevem em variáveis compartilhadas
       geralmente precisam de sincronização
     - Ações atômicas podem ser expressas com <>
-    - A dupla checagem pode ser útil para farantir a corretude e, ainda,
+    - A dupla checagem pode ser útil para garantir a corretude e, ainda,
       aproveitar um pouco de paralelismo
 
 * Ações atômicas e soncronização
@@ -48,6 +48,6 @@ Revisão
       temos o 'await': <await (B) S;>
       - B com certeza será vendade quando S for executado
     - Exemplos:
-        - <await (s > 0) s = s - 1;
+        - <await (s > 0) s = s - 1>;
         - <S;>                       # ação atômica simples
         - <await (count > 0);>       # faz programa esperar por condição
