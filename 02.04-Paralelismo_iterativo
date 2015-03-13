@@ -62,30 +62,29 @@ Paradigmas de paralelismo
       - Logo, esse laço NÃO PODE SER PARALELIZADO.
 
       - Ainda assim, os produtos c[i,k]-c[k,j] poderiam ser 
-        paralelizados. Poderíamos fazer algo para paralelizá-los, mas 
-        de forma prática, é possível que criar processos e juntar 
-        resultados não compense (contra o custo das operações de soma 
-        e multiplicação).
+        paralelizados. Porémm, na prática, é possível que criar processos
+        para cada multiplicação e juntar seus resultados não compense
+        (comparado com o custo das operações de soma e multiplicação).
 
 * Paralelismo recursivo
     - Recursões independentes em algoritmos de divisão e conquista
-      poderma ajudar
+      têm potencial de paralelização
 
-    - Cara recursão pode criar processos da mesma forma que as iteções e
-      é igualmente custoso.
+    - Cada recursão pode criar processos, e da mesma forma que com as 
+      iterações, isso pode ser muito igualmente custoso.
 
     - Ex: área de integral
         
-           ^                 ~~~~~~     |   Criamos um trapézio que
+           ^                 ######     |   Criamos um trapézio que
            |                / |         |   aproxima a área da curva.
-           |               /~ |         |   
+           |               /# |         |   
            |              /   |         |   Criamos dois trapézios
-           |             / ~ /|         |   consecutivos, divididos
+           |             / # /|         |   consecutivos, divididos
            |            /   / |         |   pelo ponto médio.
-           |           /  ~/  |         |   
-           |  ~~~~    / ~/|   ~         |   Calculamos a área do
-           |~      ~ / ~/ |   |         |   primeiro trapézio e dos
-           |         ~ /  |   |         |   dois trapézios menores.
+           |           /  #/  |         |   
+           |  ####    / #/|   ~         |   Calculamos a área do
+           |#      # / #/ |   |         |   primeiro trapézio e dos
+           |         # /  |   |         |   dois trapézios menores.
            |         |/   |   |         |   
            |         |    |   |         |   Se a diferença for menor
            +------------------------->  |   que um épsilon, essa será
@@ -94,6 +93,9 @@ Paradigmas de paralelismo
                           2             |   Senão, repetimos o processo
                                         |   para o trapézio de maior
                                         |   área.
+    
+      - Como o problema se divide em 2 problemas menores independentes,
+        podemos fazer o cálculo das áreas de forma concorrente.
 
 * Produtores e consumidores (pipeline)
     
