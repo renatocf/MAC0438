@@ -271,3 +271,6 @@ Travas e barreiras de sincronização
           o momento, não consideramos que existe no nosso pseudo-C):
 
             | do { while (lock) skip; } while (TS(lock));
+
+        - Na implementação real, tentaremos trocar 'skip' por 'delay',
+          que deixará outro processo executar, evitando o busy-waiting.
