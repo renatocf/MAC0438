@@ -1,0 +1,68 @@
+Algoritmo Backery
+==================
+
+* Características
+    - Não depende do Fetch-and-Add
+    - Reduz a chande de overflows
+    - Tenta reproduzir outro esquema junto do atendimento do mundo real
+        - Os processos vão tentar entrar na seção crítica. Ao fazer
+          isso, ao invés de olhar o visor, eles olham as senhas dos
+          outros processos e selecionam uma senha maior que a de todos.
+
+* CSEntrada e CSSaída
+    - CSEntrada
+        | <senha[i] = max(senha[1:n]) + 1;>
+        | for (j = 1 to st i != j) {
+        |   <await(senha[j] == 0 or senha[i] < senha[j]); >
+
+        - Apesar de parecer estranho, não precisamos voltar ao início
+          do vetor. Com certeza um processo que já foi comparado,
+          quando atendido, terá uma senha maior que o processo que
+          está olhando.
+        - Só paramos e esperamos quando encontramos alguém cuja senha
+          seja menor que a nossa. Só seremos atendidos depois deles.
+        
+    - CSSaída
+        | senha[i] = 0;
+
+* 1ª implementação (com await's)
+
+    | int senha[1:n] = ([n], 0);
+    | process CS[i=1 to n] {
+    |     while(true) {
+    |         <senha[i] = max(senha[1:n]) + 1;>
+    |         /* Não existe instrução de máquina para executar 'max' */
+    |         for [j=1 to n st j != i)
+    |             <await (senha[j] == 0 or senha[i] < senha[j]);>
+    |             /* Não segue a PNMUV */
+    |         /* região crítica */
+    |         senha[i] = 0;
+    |         /* região não-crítica */
+    |     }
+    | }
+    
+    - Novamente, temos '<await (B);>'. Precisamos de alguma maneira de
+      implementar as regiões críticas.
+    - O 2º await mais interno tem um problema extra: sua condição
+      interna não respeita a PNMUV.
+
+* 2ª implementação (incorreta)
+
+    - Vamos começar pensando para 2 processos
+    
+    - CS1
+        | senha1 = senha2 + 1;
+        | while (senha2 != 0 and senha1 > senha2) skip;
+
+    - CS2
+        | senha2 = senha1 + 1;
+        | while (senha1 != 0 and senha2 > senha1) skip;
+    
+    - Problemas
+        - Ambos os processos podem ficar esperando indefinidamente,
+          em um livelock.
+        - Inicialmente, 'senha1' e 'senha2' são 0. Se ambos os valores
+          forem carregados na 1ª atribuição, teremos que ambos 'senha1'
+          e 'senha2' serão 1. Eles passam pela primeira condição, e a
+          segunda é sempre falsa. Espera indefinida.
+        - Precisamos de uma maneira de corrigir esse problema.

@@ -1,0 +1,87 @@
+Algoritmo Ticket
+=================
+
+* Mesma ideia de estabelecimentos (mundo real) que atendem com senha
+
+* Implementação
+    - Há um contador único num visor mostrando quem está sendo
+      atendido (variável 'senhaPróxima')
+    - Há uma impressora que imprime uma senha (única) para o
+      próximo que chega (variável 'senhaGeral')
+    - Há uma variável para guardar a senha que o processo quer
+      (variável 'senha[i]' com a senha do processo 'i')
+
+    - Ambos os contadores serão implementados usando contadores
+
+* CSEntrada e CSsaída em CS[i]
+
+    - CSEntrada
+        | <senha[i] = senhaGeral; senhaGeral++;>
+        | /* o incremento precisa ser NA HORA, para que o próximo */
+        | /* processo que tente pegar uma senha o encontre        */
+        | <await (senha[i] == senhaProxima);>
+
+    - CSSaida
+        | <senhaProxima++>
+
+* Algoritmo completo
+
+    | int senhaGeral = 1, senhaProxima = 1; senha[1:n] = ([n], 0);
+    | process CS[i=1 to n] {
+    |     while (true) {
+    |   /*1*/ <senha[i] = senhaGeral; senhaGeral++;> /* prot. entrada */
+    |   /*2*/ <await (senha[i] = senhaProxima);>
+    |         /* seção crítica */
+    |   /*3*/ <senhaProxima++;>                      /* prot. saída */
+    |         /* seção não crítica */
+    |     }
+    | }
+    
+    - Essa implementação é interessante, mas usa < e > (que não existem
+      na maioria das máquinas). Precisamos ficar livre deles.
+
+    - Implementações concretas dos protocolos
+        3. 'senhaProxima++' não é atômico. Porém, ele é o código
+           imediatamente à seção crítica. Logo, sempre haverá apenas
+           um processo nessa seção de código. Por isso, podemos tirar
+           os < e >. Ficamos com:
+
+            | senhaProxima++;
+        
+        2. Podemos trocar o '<await (B)>' por um laço 'while (!B)'
+           se B respeitar a PNMUV. B tem 2 referências críticas
+           ('senha' e 'senhaProxima'). Porém, 'senha' é acessada
+           pelo processo 'i' apenas na posição 'senha[i]'. Assim,
+           ela age como uma variável local. Portanto, temos a
+           PNMUV e podemos usar:
+
+            | while (senha[i] != senhaProxima); /* 'skip' ou 'Delay' */
+        
+        1. Para trocar a primeira condição, é bem mais difícil. Em
+           geral, precisamos utilizar os recursos de HARDWARE.
+           Consideraremos a existência de uma instrução 'Fetch-and-Add'
+           (como usamos com 'Test-and-Set'). Essa instrução é definida
+           como:
+
+            | FA(var, incr) {
+            |   <int tmp = var; var += incr; return tmp;>
+            | }
+
+           Então, de forma geral, podemos substituir 3 por:
+            
+            | senha[i] = FA(senhaGeral, 1);
+
+           Será que conseguiríamos trocar a instrução apenas por
+           uma forma:
+
+            | senha[i] = senhaGeral; <senhaGeral++;>
+
+           Podemos ter mais de um processo pegando a mesma senhaGeral
+           ao mesmo tempo.
+
+    - Problemas
+        - Pode demorar para chamar o processo que tem direito de entrar
+          (problema de eficiência, mas não quebra a propriedade).
+        - Podemos estourar a variável utilizada, se usarmos os programas
+          rodando durante muito tempo. Seo overflow ocorrer, podemos ter
+          mais de um processo com a mesma senha.

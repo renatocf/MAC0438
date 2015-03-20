@@ -101,10 +101,9 @@ Algoritmo Ticket
             | senha[i] = senhaGeral; <senhaGeral++;>
 
         - Resolve?
-            - NÃO, pois as senhas dos próximos processos sempre serão
-              diferentes da do processo atual, mas podem ser iguais. Ou
-              seja: na primeira rodada, podemos ter TODOS os processos
-              com a mesma senha...
+            - NÃO, pois mais de um processo pode pegar a mesma
+              'senhaGeral' antes que o incremento ocorra no primeiro
+              processo que a pegou.
 
         - A solução é aplicar o protocolo completo dentro do protocolo
           de entrada:
