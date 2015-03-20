@@ -1,0 +1,70 @@
+Implementações do await
+========================
+
+* Qualquer solução para o problema da seção crítica pode ser usado na
+  implementação de uma ação atômica condicional
+
+    - <S;> é equivalente a:
+
+        | CSEntrada;
+        | S;
+        | CSSaída;
+
+    - Obs: para far certo, todos os processos devem fazer o mesmo.
+
+* Segunda solução
+    - Como impelemntar o <await (B) S;>?
+    - Lembrando:
+        - Atrasa a execução até B ser verdade
+        - B deve serverdade quando S começa a executar
+    
+        | CSEntrada;
+        | while (!B) { /* ??? */ }
+        | S;
+        | CSSaída;
+
+    - Problema
+        - B vai rodar para sempre se não "ceder sua vez" para que outro
+          processo rode.
+
+* Terceira solução
+
+    | CSEntrada;
+    | while (!B) { CSSaida; CSEntrada; }
+    | S;
+    | CSSaída;
+    
+    - Esta solução evita de B não permitir outros processos executarem
+    - Entretanto, o laço fica executando o protocolo de entrada e saída
+      repetidamente...
+
+* Quarta solução
+    - Na solução anteriore, temos problema de ocntenção de memória. Pode
+      não ter tempo de B mudar para que dois processos executando ao
+      mesmo tempo executem.
+    - Podemos usar o comando 'Delay' para "atrasar" a execução do novo
+      protocolo de entrada.
+
+    | CSEntrada;
+    | while (!B) { CSSaida; Delay; CSEntrada; }
+    | S;
+    | CSSaída;
+
+    - O 'Delay' pode ser definido como tempos aleatórios (nos exemplos
+      anteriores, o 'Delay' pode substituir o 'skip')
+
+* Quinta solução ('S' é 'skip')
+
+    - Como implementar o '<await (B);>' nesse caso?]
+    - Se B satisfaz a PNMUV, basta usarmos:
+
+         | while (!B) skip;
+
+* Utilização na prática
+    - Similar ao implementado no hardware de placas Ethrnet (protocolo
+      de back-off exponencial)
+    - Uma placa envia um quadro que pode colidir com o quadro de outra
+      placa de rede
+    - As colusões são detectadas caso ocorram
+    - Em caso de colisão, os computadores envolvidos na colisão esperam
+      um tempo aleatório.
