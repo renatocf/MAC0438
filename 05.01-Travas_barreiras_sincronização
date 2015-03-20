@@ -139,7 +139,7 @@ Travas e barreiras de sincronização
           → SIM, por construção
 
         - Ausência de deadlock
-          → SIM, porque un1 e un2 nunca serão verdade ao mesmo
+          → SIM, porque in1 e in2 nunca serão verdade ao mesmo
             tempo.
 
         - Ausência de atrasos desnecessários (código fora da SC
@@ -196,11 +196,11 @@ Travas e barreiras de sincronização
 
     - Quarta solução
         - Queremos tornar o algoritmo possível
-            - Estamos "rouvando" quando usamos < e >
+            - Estamos "roubando" quando usamos < e >
 
         - Solução (incorreta):
 
-            | while (lock == true;
+            | while (lock == true);
             | lock = true;
 
             - PROBLEMA: Temos 2 ações atômicas que poder não ser 
@@ -239,7 +239,7 @@ Travas e barreiras de sincronização
 
             - Em soluções com spin-lock (que ficam esperando até a
               condição ser atendida), o protocolo de saída só precisa 
-              retornar lock para o valor inicial.
+              retornar o lock para o valor inicial.
 
             - Na arquitetura x86, a instrução assembly para isso
               é chamada 'bts'.
