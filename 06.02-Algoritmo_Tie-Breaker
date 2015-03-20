@@ -1,0 +1,166 @@
+Algoritmo Tie-Breaker (Peterson)
+=================================
+
+* Características
+    - Faz um revesamento para os processos entrarem na seção crítica
+    - Desempara a disputa quando os processos tentam entrar na seção
+      crítica
+    - A ideia é saber quem entrou na seção crítica por último
+
+* Implementação do revezamento
+    - Variável para marcar qual foi o último processo que entrou na
+      seção critica
+    - Não depende de instruçẽos especiais de máquina
+    - É simples para 2 processos, mas complexo de implementar para N
+
+* Primeira tentativa (incorreta)
+    
+    | while (in2) skip; /* Protocolo de entrada de CS1 */
+    | in1 = true;
+    |
+    | in1 = false;      /* Protocolo de saída de CS1 */
+    | 
+    | while (in1) skip; /* Protocolo de entrada de CS2 */
+    | in2 = true;
+    |
+    | in2 = false;      /* Protocolo de saída de CS2 */
+
+    - Problemas:
+        - O protocolo de entrada não é atômico
+            - O teste de CS1 pode dar falso e ele ser interrompido. O
+              teste de CS2 dá falso e ele é interrompido. CS1 entra na
+              região crítica e é interrompido. CS2 entra na região
+              crítica e é interrompido. A exclusão mútua não é
+              garantida.
+
+* Segunda tentativa (incorreta)
+    
+    | in1 = true;       /* Protocolo de entrada de CS1 */
+    | while (in2) skip;
+    |
+    | in1 = false;      /* Protocolo de saída de CS1 */
+    | 
+    | in2 = true;       /* Protocolo de entrada de CS2 */
+    | while (in1) skip;
+    |
+    | in2 = false;      /* Protocolo de saída de CS2 */
+
+    - O protocolo de entrada não é atômico, mas a exclusão mútua está
+      garantida!
+        - Se CS1 é executado, in1 fica 'true' (pois a ação é atômica).
+          Mesmo que ele seja interrompido e CS2 rode, ficará prezo no
+          while do protocolo de entrada.
+
+    - Problemas
+        - A implementação NÃO GARANTE a ausência de deadlocks
+            - Se CS2 for interrompido logo após entrar em seu protocolo
+              de entrada, in2 será 'true'. CS1 ficará preso em seu laço.
+              Quando for interrompido e CS2 rodar, também ficará preso
+              (pois in1 será 'true'). Essa situação (dois processos
+              presos em laços) configura um livelock.
+            - Para evitar este problema, tentaremos desempatar quando
+              esta situação ocorrer.
+
+* Terceira tentativa (incorreta)
+    
+    - Ideias
+        - Ter uma variável 'last' que armazena qual foi o último
+          processo a começar a executar o protocolo de entrada.
+        - Se mais de um processos tentar entrar na seçãocrítica (in1 e
+          in2 sendo verdade), o último processo a começar o protocolo de
+          entrada irá esperar.
+    
+    - Implementação (usando 'await'):
+
+    | bool in1 = false, in2 = false;
+    | int last = 1;
+    | 
+    | process CS1 {
+    |     while (true) {
+    |         in1 = true; last = 1;     /* Prot. entrada */
+    |         <await (!in2 or last == 2);>
+    |         /* região crítica */
+    |         in1 = false;              /* Prot. saída */
+    |         /* região não crítica */
+    |     }
+    | }
+    | 
+    | process CS2 {
+    |     while (true) {
+    |         in2 = true; last = 2;     /* Prot. entrada */
+    |         <await (!in1 or last == 1);>
+    |         /* região crítica */
+    |         in2 = false;              /* Prot. saída */
+    |         /* região não crítica */
+    |     }
+    | }
+
+    - Problemas
+        - Conceitualmente, o algoritmo funciona, respeitando as 4
+          propriedades (exclusão mútua, ausência de deadlocks,
+          ausência de espera desnecessária, entrada garantida
+          - mesmo com um escalonador com justiça fraca)
+        - Ainda estamos usando o '<await>'. Como tirá-lo? Será que
+          podemos fazer 'while (!(!in1 or last == 1))'?
+
+* Quarta tentativa
+    
+    - Considerações
+        
+        | in2 = true; last = 2; /* Prot. entrada */
+        | <await (!in1 or last == 1); >
+
+        - De forma geral, só podemos transformar '<await (B);>' em
+          'while (!B) skip;' se B apresentar a PNMUV!
+        - Podemos relaxar o requisito de ter a PNMUV?
+
+        | in1 = true; last = 1; /* Prot. entrada */
+        | <await (!in2 or last == 2); >
+        | 
+        | in2 = true; last = 2; /* Prot. entrada */
+        | <await (!in1 or last == 1); >
+        
+        - Suponhamos que para CS1 a condição do 'await' seja verdade
+          porque 'in2' era falso.
+            - Pode ser que 'in2' mude, se o processo for interrompido e
+              CS2 conseguir rodar.
+            - Mas, se ele mudar, o processo 2 vai mudar o valor de
+              'last', que irá para 2. O resultado da expressão booleana,
+              então, não será alterado.
+            - Se o processo 2 for interrompido logo antes de executar o
+              valor de 'last', CS1 conseguirá rodar e CS2 ficará preso
+              no protocolo de entrada (sem acessar a região crítica).
+
+        - Suponhamos que para CS1 a condição do 'await' seja verdade
+          porque 'last' era 2.
+            - 'last' não poderá mudar antes do CS1 executar sua seção
+              crítica!
+            - Como 'last' não muda, isso não afeta o resultado da
+              expressão booleana.
+
+        - Logo, podemos colocar o 'while'!
+
+    - Implementação
+
+    | bool in1 = false, in2 = false;
+    | int last = 1;
+    | 
+    | process CS1 {
+    |     while (true) {
+    |         in1 = true; last = 1;     /* Prot. entrada */
+    |         while (in2 and last != 2) skip;
+    |         /* região crítica */
+    |         in1 = false;              /* Prot. saída */
+    |         /* região não crítica */
+    |     }
+    | }
+    | 
+    | process CS2 {
+    |     while (true) {
+    |         in2 = true; last = 2;     /* Prot. entrada */
+    |         while (in1 and last != 1) skip;
+    |         /* região crítica */
+    |         in2 = false;              /* Prot. saída */
+    |         /* região não crítica */
+    |     }
+    | }

@@ -1,0 +1,18 @@
+Soluções justas para Seção Crítica
+====================================
+
+* Até agora, as soluções não garantiam a entrada na seção crítica quando
+  escalonadas por um escalonador com justiça fraca:
+    - É possível que um processo nunca seja executado
+    - É possível que um processo que tenha começado primeiro seja
+      executado depois
+
+    - Na prática, é difícil um processo nunca entrar na seção crítica.
+      Porém, é possível.
+
+* Existem três soluções possíveis:
+    - Algoritmo Tie-Breaker (Peterson)
+    - Algoritmo Ticket
+    - Algoritmo Backery
+
+    - Nos três casos, basta um escalonador com justiça fraca

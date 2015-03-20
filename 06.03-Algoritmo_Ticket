@@ -1,0 +1,119 @@
+Algoritmo Ticket
+=================
+
+* Ideias
+    - Estabelecimentos que atendem por senha
+    - Há um contador único com um visor (variável compartilhada) que
+      mostra quem é o próximo a ser atendido
+    - Há uma impressora que imprime uma senha (variável compartilhada)
+    - O que é preciso fazer?
+
+* Objetivos
+    - O algoritmo é mais simples que o Tie Breaker
+    - Usa contadores inteiros para ordenar processos (ao invés de usar o
+      'last')
+    - Um processo retira uma senha e espera sua vez.
+
+    - 'senhaGeral' marcará a senha disponível para o próximo processo. É
+      uma variável global inicializada com 1.
+    - 'senhaProxima' marcará a próxima sena a ser atendida. Também será
+      uma variável global inicializada com 1.
+    - 'senha[i]' armazenará a senha que cada processo pegou. Também é
+      uma variável global, mas sem necessidade de controle de acesso.
+      Começará igual a 0 para todos os valores.
+        - Operações realizadas em 'senha[i]' serão de atribuição
+          (atômicas por sua natureza).
+
+* Protocolos de entrada e saída
+    - CSEntrada para o processo CS[i]
+        
+        | <senha[i] = senhaGeral; senhaGeral++; >
+        | <await (senha[i] == senhaProxima);>
+
+    - CSSaida para o processo CS[i]
+        
+        | <senhaProxima++;>
+
+* Algoritmo completo (com 'await')
+
+    | int senhaGeral = 1, senhaProxima = 1, senha[1:n] = ([n], 0);
+    | 
+    | process CS[i=1 to n] {
+    |     while (true) {
+    |         <senha[i] = senhaGeral; senhaGeral++;> /* Prot. entrada */
+    |         <await (senha[i] == senhaProxima);>
+    |         /* região crítica */
+    |         <senhaProxima++> /* Prot. Saída */
+    |         /* região não-crítica */
+    |     }
+    | }
+    
+    - Há entrada garantda, porque uma hora a 'senhaProxima' vai ser
+      igual à 'senha[i]'.
+
+    - Problemas
+        - Temos 3 operações atômicas definidas com < e >
+            1. <senha[i] = senhaGeral; senhaGeral++;>
+            2. <await (senha[i] == senhaProxima);>
+            3. <senhaProxima++;> /* Prot. Saída */
+
+        - Precisamos trocá-las para implementações sem < e >
+            2. while (senha[i] != senhaProxima) skip;
+            3. senhaProxima++;
+            1. Usar instrução Fetch-and-add
+
+* Algoritmo completo (com Fetch-and-Add)
+            
+    - Vamos definir uma instrução Fetch-and-Add como realizando
+      a seguinte operação:
+        FA(var, incr):
+        <int tmp = var; var += incr; return tmp;>
+    
+    - O novo algorimo, com as mudanças e usando a instruções FA será:
+    
+    | int senhaGeral = 1, senhaProxima = 1, senha[1:n] = ([n], 0);
+    | 
+    | process CS[i=1 to n] {
+    |     while (true) {
+    |         senha[i] = FA(senhaGeral, 1); /* Prot. entrada */
+    |         while (senha[i] != senhaProxima) skip;
+    |         /* região crítica */
+    |         senhaProxima++; /* Prot. saída */
+    |         /* região não-crítica */
+    |     }
+    | }
+
+    - Problemas
+        - Mas e se o computador não tiver a instrução FA?
+        - Valores muito grandes de 'n' podem acabar estourando a
+          variável, e invalidando as pré-condições.
+        - O algoritmo ainda desperdiça tempo com laços repetidos.
+
+* Algoritmo completo (sem Fetch-and-Add)
+
+    - Qual é o objetivo do protocolo?
+        - Tratar o caso em que dis processos chegam no protocolo de
+          entrada na mesma hora
+        - Poderíamos colocar apenas a segunda atribuição de forma
+          atômica? As senas dos próximos processos sempre será
+          diferentes
+        
+            | senha[i] = senhaGeral; <senhaGeral++;>
+
+        - Resolve?
+            - NÃO, pois as senhas dos próximos processos sempre serão
+              diferentes da do processo atual, mas podem ser iguais. Ou
+              seja: na primeira rodada, podemos ter TODOS os processos
+              com a mesma senha...
+
+        - A solução é aplicar o protocolo completo dentro do protocolo
+          de entrada:
+            
+            | CSEntrada;
+            | senha[i] = senhaGeral;
+            | senhaGeral++;
+            | CSSaida;
+
+        - Poderíamos implementar usando Test-and-Set
+        - Com isso, alguma propriedade seria perdida?
+            - Usando Test-and-Set, poderíamos ter espera indefinida
