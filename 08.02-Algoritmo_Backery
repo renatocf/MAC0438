@@ -1,0 +1,108 @@
+Algoritmo Backery
+==================
+
+* 2ª implementação (incorreta)
+
+    - Vamos começar pensando para 2 processos
+    
+    - CS1
+        | senha1 = senha2 + 1;
+        | while (senha2 != 0 and senha1 > senha2) skip;
+
+    - CS2
+        | senha2 = senha1 + 1;
+        | while (senha1 != 0 and senha2 > senha1) skip;
+    
+    - Problemas
+        - Ambos os processos podem ficar esperando indefinidamente,
+          em um livelock.
+        - Inicialmente, 'senha1' e 'senha2' são 0. Se ambos os valores
+          forem carregados na 1ª atribuição, teremos que ambos 'senha1'
+          e 'senha2' serão 1. Eles passam pela primeira condição, e a
+          segunda é sempre falsa. Espera indefinida.
+        - Precisamos de uma maneira de corrigir esse problema.
+
+
+* 3ª implementação (incorreta)
+
+    - Vamos começar pensando para 2 processos
+    
+    - CS1
+        | senha1 = senha2 + 1;
+        | while (senha2 != 0 and senha1 > senha2) skip;
+
+    - CS2
+        | senha2 = senha1 + 1;
+        | while (senha1 != 0 and senha2 >= senha1) skip;
+
+    - Ao colocar o >=, conseguimos fazer um 'desempate' nas comparações
+    
+    - Problemas
+        - A soma e atribuição não são feitas de forma atômica. Por esse
+          motivo, podemos ver o valor de cada uma das senhas antigas.
+          CS1 pode ver 'senha2' ser igual a 0 - mas não termina de
+          atribuir 'senha1' igual a 1. CS2, então, terá 'senha2' 
+          igual a 0, e quebrará o laço da comparação na primeira 
+          condição (senha1 == 0), entrando na seção crítica. Voltando
+          para CS1, teremos 'senha1 == 1' e como ele tem prioridade,
+          não ficará no laço porque 'senha1 == senha2'. Ambos estarão,
+          então, na seção crítica.
+
+
+* 3ª implementação (correta, para 2 processos)
+
+    - CS1
+        | senha1 = 1;
+        | senha1 = senha2 + 1;
+        | while (senha2 != 0 and senha1 > senha2) skip;
+
+    - CS2
+        | senha2 = 1;
+        | senha2 = senha1 + 1;
+        | while (senha1 != 0 and senha2 >= senha1) skip;
+
+    - A senha vale 1 quando o processo tenta entrar na seção crítica,
+      para evitar o problema de condição de corrida que havia com a
+      linha 'senhaX = senhaY + 1'
+
+    - Problemas
+        - O fato de não ser simétrico dificulta na generalização do
+          algoritmo para N processos
+        - Ainda não resolvemos o problema de percorrer o laço
+
+
+* 4ª implementação (correta, para N processos)
+
+    - Como generalizar a parte que faz as segundas comparações no while?
+        - Se as senhas forem iguais, tem que dar prioridade para algum
+          processo.
+        - Nós escolhemos o processo 1 para ter a prioridade (na verdade,
+          demos prioridade para o processo com menor id).
+
+    - Vamos comparar os 2 valores de senha, e se forem iguais, o
+      desempate vai ser feito pelo id do processo, usando a seguinte
+      definição de macro:
+        
+        (a,b) > (c,d) = { true, se (a > c) ou se (a == c and b > d)
+                        { false, caso contrário
+
+    - Implementação
+
+        | int senha[1:n] = ([n] 0);
+        | process CS[i=1 to n] {
+        |     while(true) {
+        |         senha[i] = 1;
+        |         senha[i] = senha[i] = max(senha[1:n]) + 1;
+        |         for (j = 1 to n st j != i)
+        |             while (senha[j] != 0    /* protocolo de entrada */
+        |                    and (senha[i],i) > (senha[j],j)) skip;
+        |         /* seção crítica */
+        |         senha[i] = 0;               /* protocolo de saída */
+        |         /* seção não crítica */
+        |     }
+        | }
+
+    - No fundo, estamos usando o id do processo para fazer o desempate
+
+    - Problemas
+        - Ainda pode estourar o inteiro, mas a chance é MUITO menor

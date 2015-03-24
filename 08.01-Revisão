@@ -1,0 +1,11 @@
+Algoritmos justos com escalonagores com justiça fraca
+======================================================
+
+* Algoritmo Tie-Breaker
+* Algortimo Tickets
+    - Precisa usar a instrução Fetch-and-Add para ser implementado,
+      ou usando outro protocolo de acesso à seção crítica para fazer
+      o acesso à pequenas regiões.
+
+* Algoritmo Backery
+    - Gostaríamos de reduzir a possibilidade de estourar a variável

@@ -1,0 +1,259 @@
+Barreiras de sincronização
+===========================
+
+* As barreiras de sincronização surgem da necessidade de garantir que
+  todos os processos cheguem em um determinado ponto do algoritmo antes
+  de prosseguir.
+
+* Essa técnica é útil para algoritmos iterativos em que as iterações
+  rodam em paralelo e o algoritmo precisa parar por um momento para
+  verificar que o critério de parada foi atendido.
+
+* Exemplo
+
+      processador 1           processador 2           processador 3
+    [               ]       [               ]       [               ]
+      com1                    com1                    com1
+      com2                    com2                    com2
+      ...                     ...                     ...
+
+            \                       |                       /
+             \                      |                      /
+              \                     |                     /
+               \                    |                    /
+                \                   |                   /
+                 \                  |                  /
+                 \ |               \ /               | /
+                  \|                '                |/
+
+              | if (...) stop;
+              | else {
+              |     execute nova rodade de processamento;
+              | }
+        
+
+* No início da disciplina, já vimos uma forma de resolver esse problema,
+  usando o comando 'co':
+
+    | while (true) {                * Problema
+    |     co [i=1 to N] {             Apesar de resolver o problema de
+    |         código da tarefa i;     fazer todos os processos se
+    |     oc;                         encontrarem no fim da iteração,
+    |     if (...) pare;              causa o problema de ficar
+    | }                               criando e destruindo N processos
+                                      toda hora... (co já faz a
+                                      sincronização porque o processo
+                                      original só roda quando os outros
+                                      terminarem).
+
+* Vamos tentar simular o que o 'co' já faz por definição, mas usando
+  o comando 'process' (mais comum em muitos SOs e bibliotecas):
+
+    process Worker [i=1 to N] {
+        while (true) {
+            código da tarefa i;
+            espere todas as N tarefas terminarem;
+            /* ^ Essa barreira de sincronizaçõa é mais eficiente do */
+            /*   que resolver o problema com 'co', pois não ficamos */
+            /*   criando e destruingo os processos.                 */
+        }
+    }
+
+
+* 1ª solução: contador compartilhado (incorreta)
+    
+    | int contador = 0;
+    | process Worker [i=1 to N] {
+    |     while (true) {
+    |         código da tarefa i;
+    |         contador = contador + 1;
+    |         <await (contador == N);>
+    |     }
+    | }
+
+    - Problemas
+        - Como o código é igual, rodando em N processadores, há grandes
+          chances de todos chegarem na linha do contador ao mesmo tempo.
+          Assim, eles lêem 'contador' como 0, e atribuem contador como
+          1. Então, eles entram no 'await' e entram em deadlock.
+        - Precisamos fazer com que o contador seja atômico
+
+
+* 2ª solução: contador compartilhado (incorreta)
+
+    | int contador = 0;
+    | process Worker [i=1 to N] {
+    |     while (true) {
+    |         código da tarefa i;
+    |         <contador = contador + 1;>
+    |         <await (contador == N);>
+    |     }
+    | }
+
+    - Problemas
+        - Na segunda rodada, teremos o contador > N, e os processos
+          ficarão parados no 'await' em deadlock
+        - Precisamos zerar o contador após termos todos.
+
+
+* 3ª solução: contador compartilhado (incorreta)
+
+    | int contador = 0;
+    | process Worker [i=1 to N] {
+    |     while (true) {
+    |         código da tarefa i;
+    |         <contador = contador + 1;>
+    |         <await (contador == N);>
+    |         <contador = contador - 1;>
+    |         <await (contador == 0);>
+    |     }
+    | }
+
+    - Problemas
+        - Zerar o contador não funciona corretamente - se um dos
+          processos rodar muito mais rápido (condições de corrida),
+          em que este processo vai atualizar o contador e depois
+          subtraí-lo novamente, fazendo os outros ficarem travados.
+        - Contenção de memória: todos os caches precisam ser alterados
+          cada vez que o contador é alterado.
+
+    - Por ambos os problemas apresentados (principalmente o problema
+      da contenção de memória), NÃO vamos querer usar esse tipo de
+      solução
+
+
+* 4ª solução: flags individuais (incorreta)
+
+    - Cada processo atualizará sua varivável, ao invés de uma mesma
+      variável (que, no caso anterior, foi o contador)
+    
+    | int arrive[n]; /* arrive vai valer 1 quando o processo 'i' */
+    |                /* chegar na barreira de sincronização      */
+    
+    - A variável arrive será mais útil, pois:
+        - Contador é equivalente a somatória de arrives:
+            | contador = (arrive[1] + ... + arrive[N])
+        - Também evitamos o test-and-set '<contador = contador + 1;>':
+            | arrive[i] = 1
+
+    - Benefícios
+        - Temos uma redução do problema de contenção de memória
+        - Não precisamos de uma instrução do tipo Fetch-and-Add
+          ou Test-and-Set
+    
+    - Problemas
+        - Calculamos somas o tempo todo
+        - Ainda precisaríamos lidar com o problema de SUBTRAIR
+          as somas ao longo do tempo.
+
+
+* 5ª solução: flags e coordenadores (incorreta)
+
+    - Vamos usar um vetor extra 'continue[n]', que vai dizer ao
+      processo i que ele pode prosseguir quando 'continue[i] == 1'.
+
+    - Precisamos de um processo que espere todos os 'arrive' serem
+      iguais a 1, e faça todos os 'continue' iguais a 1. Ele será
+      chamado de COORDENADOR.
+
+    - Algoritmo completo
+        
+        | process Coordinator {
+        |     while (true) {
+        |         for [i=1 to N] <await(arrive[i] == 1);>
+        |         for [i=1 to N] continue = 1;
+        |     }
+        | }
+        |
+        | process Worker [i=1 to N] {
+        |     while (true) {
+        |         código da tarefa i;
+        |         arrive[i] = 1;
+        |         <await (continue[i] == 1;>
+        |     }
+        | }
+
+    - Problemas
+        - Precisamos ZERAR ambos os vetores 'arrive' e 'continue'
+          antes da segunda iteração.
+
+
+* 5ª solução: flags e coordenadores (incorreta)
+
+    - Vamos tentar zerar as flags:
+        
+        | process Coordinator {
+        |     while (true) {
+        |         for [i=1 to N] <await(arrive[i] == 1);>
+        |         for [i=1 to N] continue = 1;
+        |         for [i=1 to N] continue = 0;
+        |     }
+        | }
+        |
+        | process Worker [i=1 to N] {
+        |     while (true) {
+        |         código da tarefa i;
+        |         arrive[i] = 1;
+        |         <await (continue[i] == 1;>
+        |         arrive[i] = 0;
+        |     }
+        | }
+
+    - Problemas
+        - O processo coordenador pode zerar todas as flags logo após
+          colocá-las como 1. Ele volta aos awaits e não sai mais deles,
+          fazendo os processos entrarem em deadlock.
+
+* Flags
+    - Definição: variável "erguida" por um processo para sinalizar
+      que uma condição de sincronização é verdadeira.
+
+    - Toda vez que tivermos flags para realizar esse tipo de
+      sincronização, precisamos respeitar 2 prinícios
+
+    - Princípios da sincronização por flags
+        1. O processo que espera por uma flag ser 1 é o processo
+           que zera aquela flag.
+        2. Uma flag não pode ter o valor 1 antes da flag ter sido
+           zerada.
+
+
+* 7ª solução: flags e coordenadores (correta)
+
+    - Seguiremos as propriedades necessárias para a sincronização
+      por flags funcionar.
+
+    - Algoritmo completo
+        
+        | int arrive[n] = ([n] 0);
+        | int continue[n] = ([n] 0);
+        |
+        | process Coordinator {
+        |     while (true) {
+        |         for [i=1 to N] {
+        |             <await(arrive[i] == 1);>
+        |             arrive[i] = 0;
+        |         }
+        |         for [i=1 to N] continue = 1;
+        |     }
+        | }
+        |
+        | process Worker [i=1 to N] {
+        |     while (true) {
+        |         código da tarefa i;
+        |         arrive[i] = 1;
+        |         <await (continue[i] == 1;
+        |         continue[i] = 0;
+        |     }
+        | }
+
+    - Problema
+        - Desperdiçamos um processo só para fazer a sincronização.
+        - Se o N for muito grande, pode ser que os processos esperem
+          MUITO tempo até todos passarem na barreira.
+        - Seria ideal conseguirmos tirar o processo coordenador e
+          transformar ambos os laços em algo parecido com um 'co'.
+
+    - A próxima solução que veremos será usarmos todos os processos
+      como Workers e Coordinators, tornando os laços em execuções
+      paralelas.
