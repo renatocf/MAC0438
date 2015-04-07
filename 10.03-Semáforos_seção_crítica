@@ -1,0 +1,47 @@
+Semáforos e o problema da seção crítica
+========================================
+
+* Protocolos de acesso à seção crítica
+
+    | bool lock = false;
+    | process CS1 {
+    |     while (true) {
+    |         <await (!lock) lock = true;>
+    |         /* seção crítica */
+    |         lock = False;
+    |         /* seção não crítica */
+    |     }
+    | }
+
+* Mapeamento do 'await' para semáforos
+
+    - P(s) → <await (s > 0) s = s - 1;>
+    - V(s) → <s = s + 1;>
+
+* Seção crítica com semáforos
+
+    | sem mutex = 1;
+    | process CS [i=1 to n] {
+    |     while (true) {
+    |         P(mutex);
+    |         /* seção crítica */
+    |         V(mutex);
+    |         /* seção não crítica */
+    |     }
+    | }
+
+    - Simulação com 3 processos
+        
+        Processo1       Processo2       Processo3
+          P(s)
+          S.C             P(s) -----------------------> [ P2 ]
+          S.C                             P(s) -------> [ P3 ]
+          S.C                                           [ ^  ]
+          S.C                                           [ |  ]
+          V(s)                                            |
+          P(s) -------------------------------------------'
+
+        - Mesmo que o processo 1 rode rápido e tente dar P novamente,
+          o SO garantirá que os processos sejam executados conforme
+          a fila de requisições. Ao dar 'V(s)', o processo P2 é
+          executado.

@@ -1,0 +1,43 @@
+Últimas considerações sobre barreiras
+=======================================
+
+* Problemas de barreiras de disseminação
+
+        Worker        1     2     3     4     5     6     7     8
+        Etapa 1       '-----'     '-----'     '-----'     '-----'
+
+        Worker        1     2     3     4     5     6     7     8
+        Etapa 2       |     |     |     |     |     |     |     |
+                      |     '-----:-----'     |     '-----:-----'
+                      '-----------'           '-----------'
+                                                          
+    - Etapa 1
+        - w[1] faz arrive[1] = 1
+        - w[2] é lento e ainda não viu o arrive[1] ser igual a 1
+        - w[3] e w[4] foram tão rápidos quanto o w[1] e passam para
+          a rodada 2.
+
+    - Etapa 2
+        - w[3] e w[4] já estão nessa etapa!
+        - w[3] ter termina a execução dele. faz o arrive[3] = 1 e tenta
+          sincronizar com w[1], esperando o arrive[1] ser 1, e já é!
+        - Só que o w[1] tinha feito isso para o w[2], e não para o w[3].
+
+    - Temos de achar uma forma de saber quem pode ver o arrive igual
+      a 1 em cada etapa
+        - 1ª forma: criar uma matriz de arrives e cada etapa compara 
+          com um arrive diferente.
+        - 2ª forma: é possível resolver usando um vetor de arrive ai
+          invés de uma matriz se o arrive, agora, contar quantos
+          estágios se passaram.
+
+* Usando arrive como contador
+    | for [s=1 to num_stages] {
+    |     arrive[i]++;
+    |     # determina o vizinho 'j' a depender do tipo de barreira
+    |     while (arrive[j] < arrive[i]) {
+    |         skip;
+    |         # Vai ficar parado aqui esperando o outro processo
+    |         # chegar no outro estágio
+    |     }
+    | }

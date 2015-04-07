@@ -1,0 +1,176 @@
+Barreiras com árvores
+=======================
+
+* Problema da solução com flags e coordenadores
+    - Exige um processo a mais que não está ajudando a resolver o
+      problema
+    - O tempo de execução de cada iteração do coordenador é diretamente
+      proporcional a 'n'
+        - mesmo código para os workers. Provavelmente todos eles
+          chagarão na barreira ao mesmo tempo
+
+    - O ideal serai fazer as verificaçẽos do coordenador EM PARALELO
+
+        | for [i=1 to n] {
+        |     <await (arrive[i] == 1)>
+        |     arrive[i] = 0;
+        | }
+        
+        - Seria bom se conseguirmos nos livrar do 'for' e colocar um
+          'co'. Porém, já temos'n' processos.
+        - O que vamos fazer vai ser colocar os 'n' processo para também
+          serem coordenadores.
+
+* Ideia
+    - Vamos usar os Workers também como coordenadores
+    - Organizar os processos em alguma estrutura que permita a
+      comparação dos 'arrive' em paralelo ao invés de sequencial.
+
+            ||  arrive                  processo 1
+            ||  /\                      /        \
+            ||  ||                     /          \
+            ||  ||           processo 2            processo 3
+            ||  ||           /        \           /          \
+            \/  ||          /          \         /            \
+      continue  ||   processo 4   processo 5   processo 6   processo 7
+
+    - Se organizarmos os processos em árvore, com as folhas propagando
+      a atualização do 'arrive' na barreira para os pais, e a raiz
+      propagando os 'continue' para os filhos, teremos a complexidade de
+      O(lg n) na atualização (pois, em geral, os processos tende a
+      chegar na barreira ao mesmo tempo).
+
+
+* Barreira em árvore
+
+    | folha L:      arrive[L] = 1;
+    |               <await(continue[L] == 1);>
+    |               continue[L] = 0;
+    |
+    | nó interno I: <await (arrive[left] == 1);>
+    |               arrive[left] = 0;
+    |               <await (arrive[rigth] == 1);>
+    |               arrive[right] = 0;
+    |               arrive[I] = 1;
+    |               <await (continue[I] == 1);>
+    |               continue[i] = 0;
+    |               continue[left] = 1;
+    |               continue[right] = 1;
+    |
+    | raiz R:       <await (arrive[left] == 1);>
+    |               arrive[left] = 0;
+    |               <await (arrive[right] == 1);>
+    |               arrive[right] = 0;
+    |               continue[left] = 1;
+    |               continue[right] = 1;
+
+    - Ordem de execução
+
+                            processo 1
+                            ^        ^
+                           /          \
+                          /            \
+                processo 2              processo 3
+                ^        ^              ^        ^ 
+               /          \            /          \
+              /            \          /            \
+         processo 4   processo 5   processo 6   processo 7
+
+    - Se chagarmos num ponto, em termos de propagação do arrive, que
+      a raiz viu os 'arrive' dos seus filhos = 1, o P7 já pode
+      começar a executar? 
+
+        - Sim! Não precisamos esperar até que os processos filhos sejam
+          executados e, com isso, permitam que os processos filhos dele
+          executem. Quando o 'processo 1' souber que o 'arrive' dele
+          é 1, então todos poderiam começar a rodar ao mesmo tempo.
+          Usar um único 'continue' é chamado de BROADCAST.
+        - Para fazer isso, precisamos tomar cuidado para que apenas
+          o processo 1 "zere" o 'continue'.
+
+
+* Otimização 2: 'round' em cada processo (correta)
+
+    | folha L:      arrive[L] = 1;
+    |
+    |               if (roundL)
+    |                   <await (continue == 0);>
+    |               else
+    |                   <await (continue == 1);>
+    |               roundL = !roundL;
+    |
+    | nó interno I: <await (arrive[left] == 1);>
+    |               arrive[left] = 0;
+    |               <await (arrive[rigth] == 1);>
+    |               arrive[right] = 0;
+    |               arrive[I] = 1;
+    |
+    |               if (roundI)
+    |                   <await (continue == 0);>
+    |               else
+    |                   <await (continue == 1);>
+    |               roundI = !roundI;
+    |
+    | raiz R:       <await (arrive[left] == 1);>
+    |               arrive[left] = 0;
+    |               <await (arrive[right] == 1);>
+    |               arrive[right] = 0;
+    |
+    |               continue = !continue;
+
+
+* Otimização 2: 'round' global (correta)
+
+    | folha L:      arrive[L] = 1;
+    |
+    |               if (round == 0)
+    |                   <await (continue == 1);>
+    |               else
+    |                   <await (continue == 0);>
+    |
+    | nó interno I: <await (arrive[left] == 1);>
+    |               arrive[left] = 0;
+    |               <await (arrive[rigth] == 1);>
+    |               arrive[right] = 0;
+    |               arrive[I] = 1;
+    |
+    |               if (round == 0)
+    |                   <await (continue == 1);>
+    |               else
+    |                   <await (continue == 0);>
+    |
+    | raiz R:       <await (arrive[left] == 1);>
+    |               arrive[left] = 0;
+    |               <await (arrive[right] == 1);>
+    |               arrive[right] = 0;
+    |
+    |               if (round == 0) { round = 1; continue = 1; }
+    |               else            { round = 0; continue = 0; }
+
+
+* Otimização 3: apenas um 'continue' global (correta)
+
+    | folha L:      arrive[L] = 1;
+    |
+    |               if (continue == 0)
+    |                   <await (continue == 1);>
+    |               else
+    |                   <await (continue == 0);>
+    |
+    | nó interno I: <await (arrive[left] == 1);>
+    |               arrive[left] = 0;
+    |               <await (arrive[rigth] == 1);>
+    |               arrive[right] = 0;
+    |               arrive[I] = 1;
+    |
+    |               if (continue == 0)
+    |                   <await (continue == 1);>
+    |               else
+    |                   <await (continue == 0);>
+    |
+    | raiz R:       <await (arrive[left] == 1);>
+    |               arrive[left] = 0;
+    |               <await (arrive[right] == 1);>
+    |               arrive[right] = 0;
+    |
+    |               continue = !continue;

@@ -1,0 +1,92 @@
+Barreiras simétricas
+=====================
+
+* Problemas da barreira em árvore
+    
+    - Os processos são diferentes (nós anteriores fazem mais coisas que
+      as folhas e as raízes)
+    - O idela seria ter uma solução que não diferenciasse os processos
+      (processos diferentes aumentam a chance de não chegar na barreira
+      na mesma hora)
+
+* Barreiras simétricas
+
+    - O objetivo das barreiras simétricas é "simular" a existência
+      de uma árvore, mas sem ter processos especiais (como folhas
+      e raízes).
+    - Não vai ter um processo especial esperando todos os outros
+      chegarem na barreira.
+    - Cada processo espera apenas um outro (o que reduz o tempo de
+      espera)
+    - Mas serão necessários vários estágios para ter certeza que todos
+      chegaram à barreira.
+
+
+* 1ª implementação: 2 processos (correta)
+
+    - Vamos começar analisando o problema para 2 processos
+
+      /* barreira do Worker i */  :  /* barreira do Worker j */
+      <await (arrive[i] == 0);>   :  <await (arrive[i] == 0);> 
+      arrive[i] = 1;              :  arrive[i] = 1;            
+      <await (arrive[j] == 1);>   :  <await (arrive[j] == 1);> 
+      arrive[j] = 1;              :  arrive[j] = 1;            
+
+    - Conseguimos, facilmente, fazer um processo esperar um outro.
+      O problema será generalizar o número de processos para n != 2.
+
+
+* 2ª implementação: N processos com estágios (correta, ineficiente)
+
+    - Para n != 2, precisaremos variar dependendo do estágio
+
+    - As barreiras simétricas variam a depender de como calcular o
+      processo contra o queal cada um vai se sincronizar a depender do
+      estágio.
+
+        - Borboleta -> distância do processo contra o qual comparar
+          é 2^(s-1), com 's' o estágio.
+    
+        Worker        1     2     3     4     5     6     7     8
+        Estágio 1     ^-----^     ^-----^     ^-----^     ^-----^
+
+        Worker        1     2     3     4     5     6     7     8
+        Estágio 2     ^-----------^           ^-----------^
+                            ^-----------^           ^-----------^
+
+        Worker        1     2     3     4     5     6     7     8
+        Estágio 2     ^-----------------------^              
+                            ^-----------------------^
+                                  ^-----------------------^              
+                                        ^-----------------------^
+
+    - Observações
+        - Precisa de uma quantidade de processos que seja potência de 2.
+        - Se não houverem 2^n processos, temos que criar processo
+          "dummy", que só tenham implementado a execução da barreira.
+
+
+* 3ª implementação: N processos com estágios (incorreta, eficiente)
+
+    - Criar processos "dummy" é ruim. O ideal é que o algoritmo
+      funcione para qualquer quantidade de processos.
+
+    - As barreiras simétricas variam a depender de como calcular o
+      processo contra o queal cada um vai se sincronizar a depender do
+      estágio.
+
+        - Disseminação -> o cálculo da distância é similar ao da
+          borboleta, mas usa o MÓDULO da quantidade de processos
+    
+        Worker        1     2     3     4     5     6
+                      '----.'----.'----.'----.'----.|
+                      .-----------------------------'
+        Worker        1     2     3     4     5     6
+                      '-----:----.'-----:----.'-----:-
+                     |      |    :      |    |      |
+                    -:-----.'----:-----.'----:-----.'-
+                     |     |     |     |     |     |
+        Worker        1     2     3     4     5     6
+
+    - Observações
+        - NÃO precisa de 2^n processos.

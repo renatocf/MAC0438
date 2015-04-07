@@ -1,0 +1,130 @@
+Semáforos
+==========
+
+* Problemas de concorrência e soluções já vistas
+
+    - Problema da seção crítica
+
+        | process CS [i=1 to n] {
+        |     while (true) {
+        |         protocolo de entrada;
+        |         /* seção crítica */
+        |         protocolo de saída;
+        |         /* seção não-crítica */
+        |     }
+        | }
+
+        - Solução já vista:
+
+        | [ n-1 processos esperando ]
+        | while (TS(lock)) skip;
+
+    - Barreiras de sincronização
+
+        | process Worker [ i = i to n ] {
+        |     while (true) {
+        |         código da tarefa i;
+        |         espere todas as n tarefas completarem;
+        |     }
+        | }
+
+        - Solução já vista:
+
+        | [ 1 tarefa esperando    ]
+        | [ 2 tarefas esperando   ]
+        | [ ...                   ]
+        | [ n-1 tarefas esperando ]
+        | while (arrive[j] < arrive[i]) skip;
+
+    - Produtores e consumidores
+
+        | process Produtor {
+        |     while (true) {
+        |         Espere o consumidor consumir item produzido;
+        |         Produza mais um item;
+        |     }
+        | }
+
+        - Solução já vista
+
+        | [ 1 processo sempre fica esperando ]
+        | while (p != c) skip;
+
+    - Em cada solução vista, temos técnicas e algoritmos diferentes para
+      resolver o problema. Seria interessante se pudéssemos UNIFICAR
+      esta solução em uma única técnica.
+
+    - O que há em comum?
+        1. Sempre temos um processo esperando
+        2. Espera ocupado com um while
+
+    - Seria ideal termos uma forma de bloquear o processo e
+      desbloqueá-lo quando a condição do while for FALSA.
+
+* Semáforos
+    
+    1. Com os semáforos conseguiremos uma variável que não é um tipo
+       simples e que vai ser usada apenas para resolver problemas de
+       concorrência.
+
+    2. Vai possuir operações atômicas para garantir que as soluções
+       vistas até agora continuem funcionando.
+
+    - Motivação veio de semáforos de estrada
+        - Semáforos garantem o sincronismo para evitar colisões
+        - Semáforos são ligados e desligados de modo a garantir o
+          sincronismo
+
+    - Claro que para ser eficiente precisa ter suporte do kernel do SO
+
+* O que é um semáforo?
+    - Um tipo especial de variável compartilhada proposto por
+      Dijkstra
+    - Assume valores inteiros não negativos (0, 1, 2, ...)
+    - Manipulados apenas por 2 operações: V e P
+
+* Implementação em algoritmo
+    
+    | sem s;               # Cria um semáforo 's' (valor inicial = 0)
+    |
+    | sem semaforo;        # Cria um semáforo 'semáforo'
+    |
+    | sem lock = 1;        # Cria um semáforo 'lock' inicializado com 1
+    |                      # (pode inicializar com qualquer inteiro
+    |                      #  não negativo)
+    |
+    | sem fork[5] ([5] 1); # Cria um vetor de semáforos, todos
+    |                      # inicializados com 1
+
+* Operações    
+    - V => usado para sinalizar a ocorrência de um evento
+      (incremento)
+
+    - P => usado para atrasar um processo até que um evento ocorra
+      (tenta reduzir/espera a operação V ser executada)
+
+    - Mapeamento das operações ('s' é um semáforo):
+        
+        P(s) --------------------------> <await (s > 0) s = s-1;>
+        V(s) --------------------------> <s = s + 1;>
+        
+        - OBS: semáforos podem ser manipulados APENAS com V e P.
+
+* Consequências das características dos semáforos e das operaçẽos P/V
+    - Considere s=1
+        - Se 2 processos tentam rodar P(s) ao mesmo tempo
+            → apenas 1 processo vai conseguir
+        - Se 1 processo tenta rodar P(s) e outro rodar V(s)
+            → os dois processos vão prosseguir (em ordem imprevisível)
+            → s vai terminar com valor igual a 1.
+
+* Tipos de semáforo
+    - Semáforo genérico: assume qualquer valor não-negativo
+    - Semáforo binário: assume apenas 1 ou 0
+                        (nesse caso, a operação V só pode ser
+                         executada quando o semáforo vale 0)
+
+    - Processos esperando em P são acordados na ordem em que eles
+      executaram P.
+        - Uma QUANTIDADE ADEQUADA DE CHAMADA A V garantirá que todos os
+          processo esperando em P poderão prosseguir.
