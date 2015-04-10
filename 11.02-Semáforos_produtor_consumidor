@@ -1,0 +1,90 @@
+Semáforos e o problema do Produtor-Consumidor
+==============================================
+
+* Problema do produtor-consumidor
+
+    | int buf, p = 0, c = 0;
+    | process Produtor {
+    |     int a[n];
+    |     while (p < n) {
+    |         <await (p == c);>
+    |         # esperando um evento acontecer
+    |         # (produtor = consumidor) - 'P' no semáforo
+    |         buf = a[p];
+    |         p = p + 1;
+    |         # sinaliza um evento
+    |         # (produzir 1 item) - 'V' no semáforo
+    |     }
+    | }
+    |
+    | process Consumidor {
+    |     int b[n];
+    |     while (c < n) {
+    |         <await (p > c);>
+    |         # esperando um evento aconteecer
+    |         # (produtor > consumidor) - 'P' no semáforo
+    |         b[c] = buf;
+    |         c = c + 1;
+    |         # sinaliza um evento
+    |         # (produzir 1 item) - 'V' no semáforo
+    |     }
+    | }
+
+* Produtor(es) e Consumidor(es) usando semáforos
+    - Vamos usar 2 semáforos:
+        - empty => o buffer está vazio
+        - full  => o buffer está cheio
+
+* 1ª implementação (2 processos, correta)
+
+    | int buf, p = 0, c = 0;
+    | sem empty = 1, full;
+    | 
+    | process Produtor {
+    |     int a[n];
+    |     while (p < n) {
+    |         P(empty);
+    |         buf = a[p];
+    |         p = p + 1;
+    |         V(full);
+    |     }
+    | }
+    |
+    | process Consumidor {
+    |     int b[n];
+    |     while (c < n) {
+    |         P(full);
+    |         b[c] = buf;
+    |         c = c + 1;
+    |         V(empty);
+    |     }
+    | }
+
+* 2ª implementação (N processos, correta)
+
+    | typeT buf;
+    | sem empty = 1, full;
+    | 
+    | process Producer[i=1 to M] {
+    |     while (p < n) {
+    |         P(empty);
+    |         buf = produce();
+    |         V(full);
+    |     }
+    | }
+    |
+    | process Consumer[j=1 to N] {
+    |     while (c < n) {
+    |         P(full);
+    |         consume(buf);
+    |         V(empty);
+    |     }
+    | }
+
+    - Problemas
+        - Se a taxa de produção for diferente da taxa de consumo,
+          os produtores não poderão produzir (problema da "rajada"
+          de dados).
+        - Para ser eficiente, precisamos de um buffer que seja um
+          vetor - aumentando a eficiência no caso acima.
+        - Esse problema é chamado de "problema dos buffers limitados".

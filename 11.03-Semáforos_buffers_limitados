@@ -1,0 +1,28 @@
+Semáforos e o problema dos buffers limitados
+=============================================
+
+* Esse problema é GERAL - e poderia ser resolvido sem semáforos. Ele
+  aparece todas as vezes que temos produtores e consumidores com
+  taxa de produção diferente da taxa de consumo.
+
+* Mapeando os problemas, temos:
+    - Buffer simples     => Buffer com várias posições
+    - Semáforos binários => Semáforos genéricos
+
+    - A ideia será usarmos os semáforos para CONTAR os recursos
+      utilizados (produzidos ou consumidos).
+
+* Considerando o buffer, temos:
+
+    | x | y | z |   |   |   |   |   |   |
+      ^           ^
+      |           '- primeira posição vazia (precisa de uma variável
+      |              para o produtor saver onde vai colocar o próximo
+      |              item).
+      |
+      '- primeira mensagem da fila (precisa de uma variável
+         para manter a posição inicial e e para sabermos
+         quando o produtor tem que consumir).
+
+    - Por simplicidade, teremos um buffer SIMPLES e CIRCULAR. Para
+      termos mais flexibilidade, poderíamos usar uma lista ou fila.

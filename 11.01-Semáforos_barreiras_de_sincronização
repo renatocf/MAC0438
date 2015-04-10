@@ -1,0 +1,40 @@
+Semáforos e o problema das Barreiras de Sincronização
+======================================================
+
+* Barreiras de sincronização (relembrando)
+    
+    | /* Processo w[i] */
+    | <await (arrive[i] == 0);>
+    | arrive[i] = 1;
+    | <await (arrive[j] == 1);>
+    | /* j é calculado a depender do 'for' em que se encontra */
+    | /* (e do tipo de barreira - borboleta ou disseminação)  */
+    | arrive[j] = 0;
+
+* Usando semáforos para resolver uma barreira com 2 processos
+    - Usar 1 semáforo para cada flag de sincronização.
+    - Um processo, quando chegar na sua barreira, precisa avisar que
+      chegou (tem que avisar que um evento ocorreu - rodar a operação
+      'V' no semáforo).
+    - Um processo após chegar na barreira de sincronização tem que
+      esperar o outro chegar e mudar o valor do semáforo (rodar a
+      operação 'P' no semáforo).
+
+    - IMPORTANTE: não podemos esquecer a INICIALIZAÇÃO do semáforo.
+
+* 1ª implementação (2 processos, correta)
+    
+    | sem arrive1, arrive2; /* inicializados com 0 */
+    |
+    | process Worker1 {          :      process Worker2 {
+    |     while (true) {         :          while (true) {
+    |         V(arrive1);        :              V(arrive2);
+    |         P(arrive2);        :              P(arrive1);
+    |         # código da        :              # código da
+    |         # barreira         :              # barreira
+    |     }                      :          }
+    | }                          :      }
+
+    - O algoritmo já funciona sem precisar de um protocolo para
+      a saída. O fato do outro processo rodar JÁ GARANTE que o
+      'arrive1' será zerado quando o Worker2 chegar em 'arrive1'.
