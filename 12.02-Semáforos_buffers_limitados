@@ -1,0 +1,129 @@
+Semáforos e o problema dos buffers limitados
+=============================================
+
+* Agora, a taxa de produçaõ e consumo são diferentes, e há produção ou
+  consumo em rajada. Usamos, para conter essa rajada, um buffer com
+  vários elemenos, na forma de uma fila circular.
+
+* Teremos:
+    buf[n], n > 0
+    front: primeira mensagem da fila
+    rear: primeira posição vazia
+
+                         buffer de tamanho 'n'
+                    ..............................
+                    [#][#][ ][ ][ ][ ][#][#][#][#]
+                           ^           ^
+                         rear        front
+                      (primeira    (primeira
+                       posição      mensagem 
+                        vazia)      na fila)
+                      (produtor)   (consumidor)
+
+* Começaremos com apenas 1 produtor e 1 consumidor, e depois
+  expandiremos o algoritmo para 'M' produtores e 'N' consumidores
+
+* Sempre que o produtor produzir um novo item na posição 'rear', ele
+  avança o 'rear' (lembrando que estamos considerando o buffer
+  circular).
+
+  | buf[read] = data;
+  | rear = (rear + 1) % n;
+
+* Sempre que o consumidor conseome um novo item, lê esse itema da
+  posição 'front', e avança o 'front' (lembrando do buffer circular).
+
+  | result = buf[front];
+  | front = (front + 1) % n;
+
+* 1ª implementação (2 processos, correta)
+
+    | typeT buf;
+    | int front = 0, rear = 0;
+    | sem empty = n, full = 0;
+    | # Agora, usamos um semáforo genérico que está
+    | # sendo usado para contar recursos
+    |
+    | process Producer {
+    |     while (true) {
+    |         P(empty);
+    |         buf[read] = data;
+    |         rear = (rear + 1) % n;
+    |         V(full);
+    |     }
+    | }
+    |
+    | process Consumer {
+    |     while (true) {
+    |         P(full);
+    |         result = buf[front];
+    |         front = (front + 1) % n;
+    |         V(empty);
+    |     }
+    | }
+
+* 2ª implementação (N+M processos, incorreta)
+
+    | typeT buf;
+    | int front = 0, rear = 0;
+    | sem empty = n, full = 0;
+    |
+    | process Producer[i=1 to M] {
+    |     while (true) {
+    |         P(empty);
+    |         buf[read] = data;
+    |         rear = (rear + 1) % n;
+    |         V(full);
+    |     }
+    | }
+    |
+    | process Consumer[j=1 to N] {
+    |     while (true) {
+    |         P(full);
+    |         result = buf[front];
+    |         front = (front + 1) % n;
+    |         V(empty);
+    |     }
+    | }
+
+    - Problemas
+        - O semáforo 'empty' tinha valor 'n' para indicar o número de
+          posições disponíveis para produzir ou consumir. Entretanto,
+          a operação de leitura e escrita do buffer não é atômica, e
+          dois pordutores (ou dois consumidores) podem acabar lendo
+          ou escrevendo na mesma posição do buffer.
+
+* 3ª implementação (N+M processos, correta)
+
+    | typeT buf;
+    | int front = 0, rear = 0;
+    | sem empty = n, full = 0;
+    | sem mutexP = 1, mutexC = 1;
+    |
+    | process Producer[i=1 to M] {
+    |     while (true) {
+    |         P(empty);
+    |         P(mutexP);
+    |         buf[read] = data;
+    |         rear = (rear + 1) % n;
+    |         V(mutexP);
+    |         V(full);
+    |     }
+    | }
+    |
+    | process Consumer[j=1 to N] {
+    |     while (true) {
+    |         P(full);
+    |         P(mutexV);
+    |         result = buf[front];
+    |         front = (front + 1) % n;
+    |         V(mutexV);
+    |         V(empty);
+    |     }
+    | }
+
+    - Observações:
+        - Temos apenas 1 produtor e 1 consumidor rodando a cada
+          instante. Essa propriedade, porém, garante que nenhum
+          deles produzirá ou consumirá sobre a mesma posição do
+          buffer num dado momento.

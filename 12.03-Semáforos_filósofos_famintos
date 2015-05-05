@@ -1,0 +1,91 @@
+Semáforos e o problema dos filósofos famintos
+==============================================
+
+* O problema dos filósofos famintos é uma abstração de processos
+  precisando de mais de um recurso para prosseguirem a sua execução.
+
+                              .´`.
+                            .´  | `.
+                       F4 .´ .| | |.`. F3
+                        .´  |´     `| `.
+                      .´__           __ `.
+                      \  .            .  /
+                       \ \\          // /
+                     F5 \ ' /  __  \ ' / F2
+                         \ /  |__|  \ /
+                          \__________/
+                               F1
+                            
+* Objetivo
+    - Implementar um programa que simula o comportamento dos filósofos
+      (filósofios = processos).
+    - É necessário evitar a situação em que todos os filósofos estejam
+      com fome, mas não consigam comer.
+
+* Restrições
+    - Dois filósofos vi\inhos não podem comer ao mesmo tempo
+    - No máximo 2 filósofos estão comendo ao mesmo tempo
+
+* 0ª implementação: sem semáforos
+    | process Filósofo {
+    |     while (true) {
+    |         pensa; # tempo aleatório
+    |         pega os garfos;
+    |         come; # tempo aleatório
+    |         libera os garfos;
+    |     }
+    | }
+
+* Vamos usar um vetor de semáforos inicialmente valendo:
+    1. Cada posição do vetor armazena o estado de um garfo
+        1 => garfo está na mesa
+        0 => algum filósofo está segurando o garfo
+
+        P => pegar um garfo
+        V => soltar um garfo
+
+* 1ª implementação (4 filósofos, incorreta)
+
+    | garfo[5] = { 1, 1, 1, 1, 1 }
+    |
+    | process Filósofo[i=0 to 4] {
+    |     while (true) {
+    |         P(garfo[i]); P(garfo[i-1]);
+    |         come; # tempo aleatório
+    |         V(garfo[i]); V(garfo[i-1]);
+    |         pensa; # tempo aleatório
+    |     }
+    | }
+
+    - Problemas
+        - Temos 'espera circular' - todos podem pegar o garfo da
+          esquerda, e nenhum pega o garfo.
+        - Pode ocorrer o problema de 'starvation' - um filósofo nunca
+          consegue pegar os garfos, e "morre de fome".
+
+* 2ª implementação (4 filósofos, correta)
+
+    | garfo[5] = { 1, 1, 1, 1, 1 }
+    |
+    | process Filósofo[i=1 to 4] {
+    |     while (true) {
+    |         P(garfo[i]); P(garfo[i-1]);
+    |         come; # tempo aleatório
+    |         V(garfo[i]); V(garfo[i-1]);
+    |         pensa; # tempo aleatório
+    |     }
+    | }
+    |
+    | process Filósofo[0] {
+    |     while (true) {
+    |         P(garfo[i-1]); P(garfo[i]);
+    |         come; # tempo aleatório
+    |         V(garfo[i-1]); V(garfo[i]);
+    |         pensa; # tempo aleatório
+    |     }
+    | }
+
+    - Problemas
+        - Ainda pode ocorrer o problema de 'starvation'. Porém, se a
+          implementação de semáforos for justa (mantiver uma lista dos
+          processos que deram 'P'), isso não ocorrerá.

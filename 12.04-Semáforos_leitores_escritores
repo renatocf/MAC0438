@@ -1,0 +1,73 @@
+Semáforos e o problema dos leitores e escritores
+=================================================
+
+* Dois tipos de processo (leitores e escritores)
+
+* Leitores só examinam registros
+* Escritores examinam e atualizam os registros
+    - Um escritor precisa de acesso exclusivo aos registros da base
+      de dados
+
+* Se nenhum escritor estiver acessando, qualquer quantidade de leitores
+  pode acessar.
+
+* Exclusão mútua SELETIVA
+    - Classes de processos competem pelo BD.
+    - Leitores competem com escritores.
+    - Escritores competem entre si.
+
+    - Leitores devem esperar até não haver nnehum escritor acessando o
+      Banco de Dados.
+    - Escriteores devem esperar até não haver nenhum leitor ou outro
+      escritor acessondo o BD.
+
+* 1ª implementação: exclusão mútua total (N+M processos, incorreta)
+
+    | sem rw = 1;
+    |
+    | process Reader (i = 1 to M) {
+    |     while (true) {
+    |         P(rw);
+    |         lê o BD;
+    |         V(rw);
+    |     }
+    | }
+    |
+    | process Writter (i = 1 to N) {
+    |     while (true) {
+    |         P(rw);
+    |         lê o BD;
+    |         V(rw);
+    |     }
+    | }
+
+* 2ª implementação: exclusão mútua parcial (N+M processos, incorreta)
+
+    - Vamos adicionar variáveis para contar quantos leitores e
+      escritores estão lendo e escrevendo.
+
+    | int nr = 0; # Conta quantos leitores querem ler o BD
+    | sem rw = 1;
+    |
+    | process Reader (i = 1 to M) {
+    |     while (true) {
+    |         <nr = nr + 1;
+    |          if (nr == 1) P(rw);>
+    |         lê o BD;
+    |         <nr = nr - 1;
+    |          if (nr == 0) V(rw);>
+    |     }
+    | }
+    |
+    | process Writter (i = 1 to N) {
+    |     while (true) {
+    |         P(rw);
+    |         lê o BD;
+    |         V(rw);
+    |     }
+    | }
+
+    - Problemas
+        - Dessa maneira, podemos ter 'espera indefinida'. Se tivermos
+          muito leitores, que fiquem chegando sempre, o contador de
+          leitores nunca chegará a 0 e o escritor pode nunca executar.

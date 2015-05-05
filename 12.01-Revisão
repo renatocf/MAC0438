@@ -1,0 +1,9 @@
+Semáforos
+==========
+
+* Vimos a solução de semáforos para barreiras de sincronização e
+  o problema da seção crítica.
+
+* Terminamos vendo como resolver o problema dos produtores e
+  consumidores com semárofos (usando um semáforo 'empty' e um
+  semáforo 'full')
