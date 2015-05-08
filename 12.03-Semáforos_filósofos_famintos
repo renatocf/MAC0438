@@ -23,7 +23,7 @@ Semáforos e o problema dos filósofos famintos
       com fome, mas não consigam comer.
 
 * Restrições
-    - Dois filósofos vi\inhos não podem comer ao mesmo tempo
+    - Dois filósofos vizinhos não podem comer ao mesmo tempo
     - No máximo 2 filósofos estão comendo ao mesmo tempo
 
 * 0ª implementação: sem semáforos

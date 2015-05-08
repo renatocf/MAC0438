@@ -1,7 +1,7 @@
 Semáforos e o problema dos buffers limitados
 =============================================
 
-* Agora, a taxa de produçaõ e consumo são diferentes, e há produção ou
+* Agora, a taxa de produção e consumo são diferentes, e há produção ou
   consumo em rajada. Usamos, para conter essa rajada, um buffer com
   vários elemenos, na forma de uma fila circular.
 
@@ -30,7 +30,7 @@ Semáforos e o problema dos buffers limitados
   | buf[read] = data;
   | rear = (rear + 1) % n;
 
-* Sempre que o consumidor conseome um novo item, lê esse itema da
+* Sempre que o consumidor consome um novo item, lê esse itema da
   posição 'front', e avança o 'front' (lembrando do buffer circular).
 
   | result = buf[front];
