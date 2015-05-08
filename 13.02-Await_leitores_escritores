@@ -1,0 +1,43 @@
+Sincronização por condição (await) e o problema de leitores e escritores
+=========================================================================
+
+* Escrevendo o problema em função da quantidade de processos:
+    - 1 escritor requer acesso exclusivo
+    - qulquer quantidade de leitores pode acessar de forma concorrente
+
+    - Teremos expressões booleanas que respeitem a rega da quantidade de
+      processos.
+
+* Temos que contar os processos!
+    - nr => número de leitores acessando a base
+    - nw => número de escitores acessando a base
+
+    - Em pseudocódigo, teremos:
+        
+        | LEITOR                    | ESCRITOR
+        | <nr = nr + 1;>            | <nw = nw + 1;>
+        | lê a base;                | lê a base;
+        | <nr = nr - 1;>            | <nw = nw - 1;>
+
+    - Precisamos, porém, especificar o que tem de ser evitado
+
+    - QUEREMOS EVITAR QUE AMBOS nr E nw SEJAM MAIORES QUE ZERO OU
+      QUE nw SEJA MAIOR DO QUE 1
+        - Traduzido em expressões booleanas:
+            - Evitar:   (nr > 0 && nw > 0) || nw > 1
+            - Garantir: (nr == 0 || nw == 0) && nw <= 1
+                        ^^^^^^^^^^^^^^^^^^^^    ^^^^^^^
+                        Leitores e escritores   Há no máximo
+                        não podem acessar a     1 escritor
+                        base ao mesmo tempo     ativo
+
+* 1ª solução (correta, com await's)
+
+    | LEITOR                    | ESCRITOR
+    | <await (nw == 0)          | <await (nr == 0 && nw == 0);> 
+    |   nr = nr + 1;>           |   nw = nw + 1;>
+    | lê a base;                | lê a base;
+    | <nr = nr - 1;>            | <nw = nw - 1;>
+
+    - Como podemos implementar os await's? Essa solução servirá de
+      motivação para a técnica de passagem de bastão.

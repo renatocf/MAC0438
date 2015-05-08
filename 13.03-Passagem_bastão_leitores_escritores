@@ -1,0 +1,108 @@
+Passagem de bastão e o problema de leitores e escritores
+==========================================================
+
+* Como podemos implementar os comandos:
+
+    | <await (nw == 0) nr = nr + 1;>           
+
+    | <await (nr == 0 && nw == 0) nw = nw + 1;>
+
+* Para resolver este problema, precisamos conseguir implementar um
+  <await> qualquer por meio de semáforos.
+
+    - Sincronização por condição
+        <await (B) S;>
+
+    - Exclusão mútua
+        <await (true) S;> ≡ <S;>
+
+* Fazendo uma simulação:
+    
+    | P1; <await (B1) S;>
+    | P2; <await (B1) P;>
+    | P3; <await (B3) Q;>
+
+    - Precisaremos das seguintes variáveis
+        - e => semáforo geral que vai proteger todas as ações atômicas
+
+        - 1 semáforo => para cada expressão booleana diferente
+            - Precisamos limitar à entrada na condição booleana.
+
+        - 1 contador => para cada expressão booleana diferente
+            - Precisamos contar o número de processos que querem entrar
+              numa ação atômica protegida por um await.
+
+        - Essas regras valerão para qualquer número de expressões
+          booleanas em await's.
+
+* Para a implementação do problema de leitores e escritores,
+  precisaremos das seguintes variáveis:
+
+    - e:  semáforo que controla a entrada em cada ação atômica
+
+    - r:  semáforo associado com a condição do leitor
+    - dr: número de leitores esperando a condição ser verdade
+
+    - w:  semáforo associado com a condição de escritor
+    - dw: número de escritores esperando a condição ser verdade
+
+* 1ª versão (incompleta)
+
+    | int nr = 0, nw = 0;
+    | sem e = 1, r = 0, w = 0; # Todas estas variáveis foram criadas
+    | int dr = 0, dw = 0;      # para a técnica de passagem de bastão
+    |
+    | process Leitor[i = 1 to M] {
+    |   while (true) {
+    |
+    |     # <await (nw == 0) nr = nr + 1;>
+    |     P(e);
+    |     if (nw > 0) {
+    |         dr = dr + 1; # Avisamos que há mais um leitor esperando
+    |         V(e); # Liberamos o semáforo de ação atômica
+    |         P(r); # Dormimos esperando permissão para rodar
+    |     }
+    |     nr = nr + 1; # Avisa mais um leitor
+    |     SIGNAL; # Escolhe o próximo para acordar
+    |             # Aqui liberaremos o 'e' para outros rodarem
+    |
+    |     lê o BD;
+    |
+    |     # <nr = nr - 1;>
+    |     P(e);
+    |     nr = nr - 1;
+    |     SIGNAL; # Pode ser que este SIGNAL seja diferente do
+    |             # anterior, e diferente dos dois SIGNAL dos
+    |             # processos escritores
+    |   }
+    | }
+    |
+    | process Escritor[j = 1 to N] {
+    |   while (true) {
+    |
+    |     # <await (nw == 0 && nw == 0) nw = nw + 1;>
+    |     P(e);
+    |     if (nr > 0 || nw > 0) {
+    |         dw = dw + 1; # Avisamos que há mais um leitor esperando
+    |         V(e); # Liberamos o semáforo de ação atômica
+    |         P(w); # Dormimos esperando permissão para rodar
+    |     }
+    |     nw = nw + 1; # Avisa mais um leitor
+    |     SIGNAL; # Escolhe o próximo para acordar
+    |             # Aqui liberaremos o 'e' para outros rodarem
+    |
+    |     lê o BD;
+    |
+    |     # <nw = nw - 1;>
+    |     P(e);
+    |     nw = nw - 1;
+    |     SIGNAL; # Pode ser que este SIGNAL seja diferente do
+    |             # anterior, e diferente dos dois SIGNAL dos
+    |             # processos escritores
+    |   }
+    | }
+
+    - A passagem de bastão é implementada pelos SIGNAL, e ele verifica
+      nr, nw, dr e dw, para saber em qual ele dará V.
+    - Por meio desses SIGNAL, conseguimos controlar a ordem em que
+      acordaremos os leitores e escritores.

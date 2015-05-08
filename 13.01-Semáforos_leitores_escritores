@@ -1,0 +1,36 @@
+Semáforos e o problema dos leitores e escritores
+=================================================
+
+* Para terminar de resolver o problema de leitores e escritores,
+  precisamos tirar as definições de acção atômita incondicional:
+
+    | int nr = 0; # Conta quantos leitores querem ler o BD
+    | sem rw = 1, mutexR = 1;
+    |
+    | process Reader (i = 1 to M) {
+    |     while (true) {
+    |         P(mutexR);
+    |         nr = nr + 1;
+    |         if (nr == 1) P(rw);
+    |         V(mutexR);
+    |         lê o BD;
+    |         P(mutexR);
+    |         nr = nr - 1;
+    |         if (nr == 0) V(rw);
+    |         V(mutexR);
+    |     }
+    | }
+    |
+    | process Writter (i = 1 to N) {
+    |     while (true) {
+    |         P(rw);
+    |         lê o BD;
+    |         V(rw);
+    |     }
+    | }
+
+    - Problemas
+        - Resolve se, em algum momento, a quantidade de leitores chegar
+          a zero. Essa solução é boa, portanto, apenas para BDs com
+          poucas escritas, ou cuja prioridade máxima sejam sempre as
+          escritas.
