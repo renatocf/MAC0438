@@ -16,10 +16,10 @@ Semáforos e o problema dos leitores e escritores
     - Leitores competem com escritores.
     - Escritores competem entre si.
 
-    - Leitores devem esperar até não haver nnehum escritor acessando o
+    - Leitores devem esperar até não haver nenhum escritor acessando o
       Banco de Dados.
-    - Escriteores devem esperar até não haver nenhum leitor ou outro
-      escritor acessondo o BD.
+    - Escritores devem esperar até não haver nenhum leitor ou outro
+      escritor acessando o BD.
 
 * 1ª implementação: exclusão mútua total (N+M processos, incorreta)
 
