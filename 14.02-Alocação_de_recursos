@@ -1,0 +1,47 @@
+Alocação de recursos
+=====================
+
+* A alocação de recursos é o problema de decidir quando um processo pode
+  ter acesso a um recurso (entrar na seção crítica, acessar um BD, pegar
+  o garfo da mesa, etc.)
+
+* Até agora, porém, não nos preocupamos, por exemplo, com qual leitor
+  fazia o acesso à base dentre vários (o que pode ser injusto).
+
+* Essa diferenciação é útil em sistemas de tempo real, clusters, etc.
+
+* Solução geral
+    - O procedimento precisa ser seguido por TODOS os processos.
+
+    1. Processos que queiram acessar um recurso têm de executar o
+       procedimento 'request', informando quantas unidades do recurso
+       compartilhado quer acessar e também sua identidade. A ideia é
+       só liberar o acesso quando todas as unidades requisitas estiverem
+       disponíveis.
+
+    2. Após usar o recurso, um processo libera para outros executando
+       o procedimento 'relesase'.
+
+* Com base nesta solução, podemos montar um protótipo destas funções:
+
+    void request(params) {
+        # <await (request  pode ser atendido)
+        #     acesse as unidades;>
+        
+        P(e);
+        if (request não pode ser atendido)
+            DELAY; # Implementação na próxima aula
+        acesse as unidades;
+        SIGNAL; # Implementação na próxima aula
+    }
+    
+    void release(params) {
+        # <retorne as unidades;>
+        
+        P(e);
+        retorne as unidades;
+        SIGNAL;
+    }
+    
+    - A implementação depende da POLÍTICA DE ESCALONAMENTO. De início,
+      vamos implementar o Shortest-Task Next.

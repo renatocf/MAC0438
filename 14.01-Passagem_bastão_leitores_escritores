@@ -1,0 +1,266 @@
+Passagem de bastão e o problema de leitores e escritores
+==========================================================
+
+* Revisando o código dos leitores e escritores:
+
+    | sem e = 1, r, w;
+    | int nr = 0, nw = 0, dr = 0, dw = 0;
+    |
+    | process Reader[i=1 to N] {
+    |   while (1) {
+    |     # <await (nw == 0) nr = nr + 1;>
+    |     P(e);
+    |     if (nw > 0) { dr = dr + 1; V(e); P(r); }
+    |     nr = nr + 1;
+    |     SIGNAL; # SIGNAL_1
+    |
+    |     read database;
+    |
+    |     # <nr = nr - 1;>
+    |     P(e);
+    |     nr = nr - 1;
+    |     SIGNAL; # SIGNAL_2
+    |   }
+    | }
+    |
+    | process Writer[i=1 to M] {
+    |   while (1) {
+    |     # <await (nr == 0 and nw == 0) nw = nw + 1;>
+    |     P(e);
+    |     if (nr > 0 or nw > 0) { dw = dw + 1; V(e); P(w); }
+    |     nw = nw + 1;
+    |     SIGNAL; # SIGNAL_3
+    |
+    |     write database;
+    |
+    |     # <nw = nw - 1;>
+    |     P(e);
+    |     nw = nw - 1;
+    |     SIGNAL; # SIGNAL_4
+    |   }
+    | }
+
+* Implementando o SIGNAL
+    - As chamadas de SIGNAL vai decidir qual semáforo vai rodar o V
+      (r -> acordar leitor, w -> acordar escritor, w -> acordar qualquer
+       processo)
+
+    - 1ª versão (correta, 1 SIGNAL, prioridade para leitores)
+
+        | void SIGNAL() {
+        |
+        |   if ((nw == 0) and dr > 0) {
+        |     # Acorda um leitor
+        |     # Condição: nenhum escritor, e existem leitores
+        |
+        |     dr = dr - 1; V(r);
+        |   }
+        |   elsif ((nw == 0 and nr == 0) and dw > 0) {
+        |     # Acorda um escritor
+        |     # Condição: nenhum leitor ou escritor, e existem escritores
+        |
+        |     dw = dw - 1; V(w);
+        |   }
+        |   else {
+        |     V(e); # Acorda qualquer processo
+        |   }
+        |
+        |   # Ordem de tentativas:
+        |   # - Primeiro acorda leitor
+        |   # - Depois acorda escritor
+        |   # - Por último, acorda processo que tenta executar
+        |   #   ação atômica
+        | }
+        
+        - Observação
+            - Esse processo se chama PASSAGEM DE BASTÃO porque o último
+              processo a ser executado é o que escolhe qual será o
+              próximo.
+
+        - Problemas
+            - Temos muitas comparações que, em vários casos, são
+              desnecessárias. Podemos simplificar e otimizar o código
+              verificando quando o código precisa (ou não) de algumas 
+              dessas comparações.
+
+    - 2ª versão (correta, 4 SIGNAL, prioridade para leitores)
+
+        | void SIGNAL_1() { # antes de ler a base
+        |
+        |   # Estado das variáveis:
+        |   # nr > 0, nw == 0
+        |   #
+        |   # Consequências:
+        |   # Não precisa verificar `nr > 0` e `nw == 0`
+        |
+        |   if (dr > 0) { dr = dr 0 1; V(r); }
+        |   else V(e);
+        | }
+
+        | void SIGNAL_2() { # depois de ler a base
+        |
+        |   # Estado das variáveis:
+        |   # nr >= 0, nw == 0
+        |   #
+        |   # Consequências:
+        |   # Não precisa verificar `nw == 0`
+        |
+        |   if (dr > 0) {
+        |     dr = dr - 1; V(r);
+        |   }
+        |   elsif (nr == 0 and dw > 0) {
+        |     dw = dw - 1; V(w);
+        |   }
+        |   else {
+        |     V(e);
+        |   }
+
+        | void SIGNAL_3() { # antes de escrever na base
+        |
+        |   # Estado das variáveis:
+        |   # nr == 0, nw == 1
+        |   #
+        |   # Consequências:
+        |   # 1º e 2º if's são falsos
+        |
+        |   V(e);
+        | }
+
+        | void SIGNAL_4() { # depois de escrever na base
+        |
+        |   # Estado das variáveis:
+        |   # nr == 0, nw == 0
+        |   #
+        |   # Consequências:
+        |   # Só precisa verificar se há provesso querendo
+        |   # ser acordados
+        |
+        |   if (dr > 0) {
+        |     dr = dr - 1; V(r);
+        |   }
+        |   elsif (dw > 0) {
+        |     dw = dw - 1; V(w);
+        |   }
+        |   else {
+        |     V(e);
+        |   }
+        | }
+
+* Mudando a prioridade nos leitores e escritores:
+    - Na versão atual, os leitores continuam com prioridade!
+      Mas podemos controlar quem passa o bastão.
+
+    - Priorizando os escritores: novos leitores terão que ir para o
+      "final da fila" se houver algum escritor esperando.
+        - Um leitor só pode ser acordado se nenhum escritor estiver
+          esperando.
+
+    - 3ª versão (correta, 4 SIGNAL, prioridade para escritores)
+    
+        - Precisamos adicionar uma linha extra de verificação nos
+          leitores, para garantir que eles não possam começar a
+          executar se houver um escritor esperando:
+
+          | process Reader {
+          |   ...
+          |     if (nw > 0 or dw > 0) { dr = dr + 1; V(e); P(r); }
+          |     #             ^^-- prioridade aos escritores
+          |   ...
+          | }
+        
+        - Trocamos a ordem de leitores e escritores nos if e esilf
+          relacionados a 'dw' e 'dr' (SIGNAL_1 e SIGNAL_3 ficam de
+          fora, pois são independentes destas versões):
+
+          | void SIGNAL_2() { # depois de ler a base
+          |
+          |   if (nr == 0 and dw > 0) {
+          |     dw = dw - 1; V(w);
+          |   }
+          |   elsif (dr > 0) {
+          |     dr = dr - 1; V(r);
+          |   }
+          |   else {
+          |     V(e);
+          |   }
+
+          | void SIGNAL_4() { # depois de escrever na base
+          |
+          |   if (dw > 0) {
+          |     dw = dw - 1; V(w);
+          |   }
+          |   elsif (dr > 0) {
+          |     dr = dr - 1; V(r);
+          |   }
+          |   else {
+          |     V(e);
+          |   }
+          | }
+
+* Seria ideal, porém, que construíssemos um algoritmo justo entre
+  classes de processo (alternando os acessos se houvr processos das
+  duas classes esperando).
+
+    1. Envie um novo leitor para o final da fila se houver um escritor
+       esperando.
+    2. Envie um novo escritor pra o final da fila se houver um leitor
+       esperando.
+    3. Acorde um escritor que estiver esperando (se houver)
+       quando um leitor terminar de ler.
+    4. Acorde todos os leitores que estiverem esperando (se houver)
+       quando um escritor terminar de escrever; caso contrário, acorde
+       um escritor que estiver esperando (também, se houver).
+
+    - 4ª versão (correta, 4 SIGNAL, prioridade para escritores)
+        
+        - Novamente, precisamos alterar tanto o código da estrutura
+          quanto nos SIGNALs.
+            - Os itens 1 e 2 modificam os if's no início dos processos
+              (logo após o P(e)).
+            - Os itens 3 e 4 modificam os SIGNALs.
+
+        - Código principal:
+
+            | sem e = 1, r, w;
+            | int nr = 0, nw = 0, dr = 0, dw = 0;
+            |
+            | process Reader[i=1 to N] {
+            |   while (1) {
+            |     # <await (nw == 0) nr = nr + 1;>
+            |     P(e);
+            |     if (nw > 0 or dw > 0) { dr = dr + 1; V(e); P(r); }
+            |     #             ^^-- Envia para o final
+            |     nr = nr + 1;
+            |     SIGNAL; # SIGNAL_1
+            |
+            |     read database;
+            |
+            |     # <nr = nr - 1;>
+            |     P(e);
+            |     nr = nr - 1;
+            |     SIGNAL; # SIGNAL_2
+            |   }
+            | }
+            |
+            | process Writer[i=1 to M] {
+            |   while (1) {
+            |     # <await (nr == 0 and nw == 0) nw = nw + 1;>
+            |     P(e);
+            |     if ((nr > 0 or nw > 0) or dr > 0) {
+            |     #                         ^^-- Envia para o final
+            |       dw = dw + 1; V(e); P(w);
+            |     }
+            |     nw = nw + 1;
+            |     SIGNAL; # SIGNAL_3
+            |
+            |     write database;
+            |
+            |     # <nw = nw - 1;>
+            |     P(e);
+            |     nw = nw - 1;
+            |     SIGNAL; # SIGNAL_4
+            |   }
+            | }
+
+        - É desnecessário modificar os SIGNAL, porque o 1º código que
+          priorizava os leitores já resolve o problema.
