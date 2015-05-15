@@ -1,0 +1,62 @@
+Grafos de precedência com semáforos
+====================================
+
+* Os grados de precedência são usados para criar programas concorrentes
+  mais complexos.
+    - Cada thread é um vértice.
+    - Cada dependência entre tarefas é representada por um arco.
+
+    - Ex: "A tarefa 'i' precisa esperar a tarefa 'j' encher um buffer"
+
+                            (j) ------> (i)
+
+    - Ex: podemos ter um programa com o seguinte grafo
+
+                               .>(T1).
+                             .´       `.
+                         (T0)           >(T3)
+                             '.       .'
+                               '>(T2)'
+
+* Mais uma vez, para que um programa possa se aproveitar desse sistema
+  de dependências baseado em grafos, todos os programas precisarão
+  utilizar uma "API" do sistema.
+
+* Em pseudocódigo, nossos processo precisarão realizar as seguintes
+  tarefas:
+
+    | process T {
+    |   espere os predecessores, se houver algum; # 1
+    |   execute a tarefa;                         # 2
+    |   sinalize os sucessores, se houver algum;  # 3
+    | }
+
+    - Observações:
+        - 1 e 3 foram incluídos para respeitar as restrições do grafo
+        - 2 é o trabalho real que vai ser executado
+
+    | sem t0 = 0, t1 = 0, t2 = 0;
+    |
+    | process T0 {
+    |   execute a T0;
+    |   V(t0);
+    |   V(t0);
+    | }
+    |
+    | process T1 {
+    |   P(t0);
+    |   execute a T1;
+    |   V(t1);
+    | }
+    |
+    | process T2 {
+    |   P(t0);
+    |   execute a T2;
+    |   V(t2);
+    | }
+    |
+    | process T3 {
+    |   P(t1);
+    |   P(t2);
+    |   execute a T3;
+    | }

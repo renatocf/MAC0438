@@ -1,0 +1,121 @@
+Alocação de recursos
+=====================
+
+* Relembrando o código do 'request' e 'release':
+
+    | void request(params) {
+    |     # <await (request  pode ser atendido)
+    |     #     acesse as unidades;>
+    |
+    |     P(e);
+    |     if (request não pode ser atendido)
+    |         DELAY; # Implementação na próxima aula
+    |     acesse as unidades;
+    |     SIGNAL; # Implementação na próxima aula
+    | }
+    |
+    | void release(params) {
+    |     # <retorne as unidades;>
+    |
+    |     P(e);
+    |     retorne as unidades;
+    |     SIGNAL;
+    | }
+
+* Vamos implementar as funções SIGNAL e DELAY presentes no algoritmo
+  geral de alocação de recursos, baseada na técnica de passagem de
+  bastão.
+
+* DELAY e SIGNAL devem ser especificados para a política de
+  escalonamento a ser implementada.
+
+* Se a política for Shortest-job-next, por exemplo:
+    - Cada processo informa um par (tempo, id) com o tempo que vai
+      gastar para acessar o recurso e sua identificação.
+
+    - A ideia é escalonar o que tiver primeiro tempo primeiro.
+
+    - Há um semáforo associado com cada id (para acordar, na ordem
+      que desejarmos, segundo nossa política, o que desejamos).
+
+    - A forma como implementamos a fila de processos será determinante
+      para a ordem em que rodaremos um dado processo.
+
+* DELAY no 'request'
+    - Vai inserir o processo em uma fila ordenada pelo menotr tempo
+      (o primeiro processo nessa fila vai ser o processo com tempo
+      mais curto).
+    - Var liberar o semáforo 'e' e vai esperar o semáforo específico do
+      processo ser liberado.
+
+    - Será de responsabilidade de cada processo liberar o acesso ao
+      recurso usando o 'release'.
+        - Se tivermos um processo que não usar a API do sistema,
+          é impossível garantir as restrições propostas.
+
+* SIGNAL no 'request'
+    - Precisamos, apenas, liberar o semáforo 'e', dado que o DELAY
+      já terá garantido que aquele processo pode rodar.
+
+* SIGNAL no 'release'
+    - Se há processo, precisará remover o primeiro processo da fila
+      e libera o semáforo dele (o processo acordado será responsável
+      por, no seu SIGNAL, liberar o semáforo 'e').
+    - Se não houver processos, simplesmente podemos liberar o semáforo
+      'e' (algum outro processo terá permissão para rodar seus
+      SIGNAL ou DELAY).
+
+* Com estas regras, podemos implementar o código do SIGNAL e RELEASE.
+
+* 1ª versão (correta, shortest-job-first)
+
+    | # Pré-condição: cada processo faz acesso exclusivo ao recurso
+    | # (ou, equivalentemente, só existe um recurso). Basta, então,
+    | # apenas 1 variável booleana.
+    |
+    | bool free = TRUE;
+    | sem b[1:N] = 0;
+    | sem e = 1;
+    |
+    | # Cada processo sabe seu id e sabe quanto tempo vai gastar
+    | # acessando o recurso. Isso estará representado pelo par
+    | # (tempo, id)
+    |
+    | void request(time, id) {
+    |   P(e);
+    |   if (!free) {
+    |     queue.insert(time, id); # Coloca o id na    # }
+    |                             # fila, ordenando   # }
+    |                             # pelo tempo.       # }
+    |     V(e);                                       # } DELAY
+    |     P(b[id]); # Algum dos próximos a rodar é    # }
+    |               # o que deverá acordar este       # }
+    |               # processo.                       # }
+    |   }
+    |
+    |   access units;
+    |
+    |   free = FALSE;                                 # } SIGNAL
+    |   V(e);                                         # }
+    | }
+    |
+    | void release() {
+    |   P(e);
+    |
+    |   release units;
+    |
+    |   free = TRUE;                                  # }
+    |   if (!queue.empty()) {                         # }
+    |     queue.remove(tempo, id); # Remove o 1º par  # }
+    |                              # (tempo, id)      # } SIGNAL
+    |                              # encontrado       # }
+    |     V(b[id]);                                   # }
+    |   }                                             # }
+    |   V(e);                                         # }
+    | }
+
+    - Observações:
+        - Do jeito que o algoritmo está implementado, para mudar a
+          política, basta mudar a implementação do 'insert' e, talvez,
+          os argumentos do 'request' (para adicionar dados relevantes
+          à decisão da prioridade).
