@@ -2,7 +2,7 @@ Semáforos e o problema dos leitores e escritores
 =================================================
 
 * Para terminar de resolver o problema de leitores e escritores,
-  precisamos tirar as definições de acção atômita incondicional:
+  precisamos tirar as definições de ação atômita incondicional:
 
     | int nr = 0; # Conta quantos leitores querem ler o BD
     | sem rw = 1, mutexR = 1;
