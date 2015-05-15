@@ -3,17 +3,17 @@ Sincronização por condição (await) e o problema de leitores e escritores
 
 * Escrevendo o problema em função da quantidade de processos:
     - 1 escritor requer acesso exclusivo
-    - qulquer quantidade de leitores pode acessar de forma concorrente
+    - Qualquer quantidade de leitores pode acessar de forma concorrente
 
-    - Teremos expressões booleanas que respeitem a rega da quantidade de
+    - Teremos expressões booleanas que respeitem a regra da quantidade de
       processos.
 
 * Temos que contar os processos!
     - nr => número de leitores acessando a base
-    - nw => número de escitores acessando a base
+    - nw => número de escritores acessando a base
 
     - Em pseudocódigo, teremos:
-        
+
         | LEITOR                    | ESCRITOR
         | <nr = nr + 1;>            | <nw = nw + 1;>
         | lê a base;                | lê a base;
