@@ -1,0 +1,75 @@
+Monitores: Sintaxe e Semântica
+===============================
+
+* Objetivos e definições
+    - Visam eliminar as desvantagens dos semáforos.
+    - Mecanismo de abstração de dados.
+    - Similaridades a classes
+
+    - Os monitores permitirão, explicitamente, mostrar quando
+      estamos fazendo sincronização por condição ou exclusão
+      mútua.
+
+* Definição básica:
+
+    | monitor nomeDoMonitor {
+    |     # .- Também chamadas de "variáveis de condição"
+    |     # '..................
+    |     variáveis permanentes;      # Encapsula a representação
+    |     comandos de inicialização;  # de um objeto abstrato
+    |
+    |     demais procedimentos;       # Operações que podem ser
+    |                                 # executadas pelo monitor
+    |                                 # (única forma de alterar
+    |                                 # o estado do monitor)
+    | }
+
+* Nossos códigos, a partir de agora:
+    - Terão toda a parte de programação concorrente dentro do
+      monitor.
+    - Processos terão de verificar as variáveis dos monitores para
+      decidir quanto ao próximo passo.
+
+* Variáveis de condição: similares a semáforos
+
+      P1      P2     P3  : 
+        \     |     /    :
+         \    |    /     :
+          \   |   /      :
+         .---------.     : O monitor é responsável
+         | Monitor |     : por garantir que 1 único 
+         '---------'     : processo esteja na seção 
+              /\         : crítica por vez      
+              ||         : 
+              \/         : 
+             (SC)        : 
+
+
+* Comparação de monitores e classes:
+
+    | monitor nomeDoMonitor {
+    |     variáveis permanentes; # - Compartilhados por todos
+    |                            #   os procedimentos do monitor.
+    |                            # - Mantém os valores enquanto
+    |                            #   o monitor existir.
+    |                            # - Como se fossem os atributos
+    |                            #   privados da classe.
+    |
+    |     comandos de inicialização;  # Como se fosse o construtor
+    |                                 # de uma classe.
+    |
+    |     demais procedimentos; # - Como se fossem os métodos de
+    |                           #   de uma classe.
+    |                           # - Implementam as operações
+    |                           #   visíveis do monitor (só os
+    |                           #   nomes são divulgados para
+    |                           #   o exterior).
+    | }
+    |
+    | # Obs: comandos dentro do monitor não poderão acessar
+    | #      variáveis declaradas fora dele.
+
+* A partir de agora, nos nossos programas, precisamos chamar os
+  procedimentos do monitor:
+    
+    | call nomeDoMonitor.nomeDoProcedimento(argumentos);

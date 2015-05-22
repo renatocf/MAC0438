@@ -1,0 +1,25 @@
+Monitores: Introdução
+======================
+
+* Relembrando
+    - Vimos, até o momento, algumas formas de garantir a sincronização
+      entre processos: await's (instrumento teórico) e suas múltiplas
+      implementações algoritmicas; e semáforos.
+
+    - Semáforos: vantagens
+        - Facilitam a implementação de exclusão mútua
+        - Facilitam a sinalização entre processos
+        - Servem para implementar os <await ...>
+
+    - Semáforos: desvantagens
+        - Baixo nível.
+        - Fácil para o programador se confundir (quantidade diferente
+          de P's e V's).
+        - Difícil de depurar um código grande.
+
+        - PROBLEMA PRINCIPAL: difícil olhar para o código e entender
+          o seu propósito.
+            - Exclusão mútua usa P e V.
+            - Condição de sincronização (sinalização com <await ...>)
+
+    - Os monitores servirão para resolver alguns destes problemas.

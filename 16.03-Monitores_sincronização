@@ -1,0 +1,77 @@
+Sincronização com monitores
+============================
+
+* Exclusão mútua (<S;>)
+    - Implícita (apenas 1 processo poderá executar 1 procedimento,
+      por vez, dentro do monitor).
+    - Tem uma fila implícita na entrada para evitar 2 ou mais
+      processos, ao mesmo tempo, dentro do monitor.
+
+    - Exemplo de uso:
+        P1 -> call Monitor.proc1() -> |         |
+        P2 -> call Monitor.proc1() -> | Monitor |
+        P3 -> call Monitor.proc2() -> |         |
+                                      '''''''''''
+
+* Condição de sincronização (<await (B) S;>)
+    - Explícita
+    - Tem de especificar a condição a ser atendida (poderia ser
+      apenas a "tradução" da condição do await).
+
+    - Usaremos as variáveis de condição.
+        - Usadas para atrasar um processo (um processo deve
+          continuar quando o estado do monitor satisfizer alguma
+          condição booleana).
+        - Usadas para acordar um processo quando a condição
+          ficar verdadeira.
+
+        - Estas variáveis serão criadas usando a palavra-chave
+          'cond'.
+            | # Cria uma variável de condição 'nomeDaVariável'
+            | cond nomeDaVariável;
+
+        - São filas que mantém um processo dormingo
+        - O valor não é visível para o programador.
+
+    - Como manipular as variáveis de condição?
+      (como manipular uma fila?)
+
+        - empty(variableName);
+          # Retorna 'true' se a fila está vazia e 'false',
+          # caso o contrário.
+
+        - wait(variableName);
+          # - Chamada quando um processo tiver de entrar na
+          #   fila (vai bloquear o processo).
+          # - O processo é levado para o fim da fila da variável,
+          #   e após isso o acesso exclusivo ao monitor é liberado.
+
+        - signal(variableName);
+          # - Acorda o processo que está dormindo na fila de
+          #   'variableName'.
+          # - Se a fila estiver vazia, nada acontece (melhor
+          #   que com semáforos, em que devemos nos preocupar
+          #   com, ao dar V, permitir outro processo fazer o
+          #   acesso).
+          # - Pode ter a prioridade (mais para frente, veremos
+          #   isso), mas por padrão 'wait' e 'signal' fornecem
+          #   uma disciplina de sinalização FIFO).
+
+* Monitores x Passagem de bastão
+
+    - Wait x V(e)
+        - Passagem de bastão
+            | if (...) {
+            |   x = x + 1;
+            |   V(e); # Importante para não causar deadlock
+            |   P(semaforo);
+            | }
+
+        - Monitores
+            | if (...) {
+            |   x = x + 1;
+            |   wait(variavel1);
+            | }
+
+        - Após o processo ser colocado no fim da fila, o acesso
+          exclusivo ao monitor é liberado.

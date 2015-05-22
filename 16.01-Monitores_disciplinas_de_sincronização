@@ -1,0 +1,45 @@
+Disciplinas de sinalização
+===========================
+
+* DILEMA
+    - Há 1 processo executando (o que chamou o signal).
+    - Há outro processo que foi o que acabou de acordar
+      pelo signal.
+
+    - Temos de dar o acesso exclusivo para 1 dos 2 e levar o outro
+      para a fila de entrada do monitor.
+
+* "DILEMA"
+    - Onde devemos colocar o novo processo sendo executado?
+      No início da fila de entrada, ou no final?
+
+* Disciplinas de sincronização
+
+    - Sinaliza e Continua (S & C)
+        - O que executou o 'signal' continua e o que foi acordado
+          volta para a fila de entrada para rodar em algum momento
+          do futuro.
+
+    - Sinaliza e Espera (S & W)
+        - O que executou o 'signal' volta para a fila de entrada
+          para rodar em algum momento no futuro e o que foi acordado
+          assume o controle do monitor.
+
+    - Sinalize e Espera com Urgância
+        - Põe o processo que cahmou o 'signal' no início da fila de
+          entrada do monitor.
+
+* Podemos resumir as políticas com a seguinte máquina de estados
+
+                           .------------------.
+                           | Fila da variável |
+                           |   de condição    |
+                           '------------------'
+                      S & C /               \ 
+                           /           S & E \
+                          |/                 \|
+                     .---------. Monitor  .------------.
+    ---------------> | Fila de |--------->| Executando |
+    chamada a algum  | entrada |  Livre   | no monitor |
+    procedimento do  '---------'          '------------'
+    monitor
