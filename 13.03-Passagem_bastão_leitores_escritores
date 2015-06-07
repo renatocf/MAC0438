@@ -26,7 +26,7 @@ Passagem de bastão e o problema de leitores e escritores
         - e => semáforo geral que vai proteger todas as ações atômicas
 
         - 1 semáforo => para cada expressão booleana diferente
-            - Precisamos limitar à entrada na condição booleana.
+            - Precisamos limitar a entrada na condição booleana.
 
         - 1 contador => para cada expressão booleana diferente
             - Precisamos contar o número de processos que querem entrar
@@ -62,7 +62,7 @@ Passagem de bastão e o problema de leitores e escritores
     |         V(e); # Liberamos o semáforo de ação atômica
     |         P(r); # Dormimos esperando permissão para rodar
     |     }
-    |     nr = nr + 1; # Avisa mais um leitor
+    |     nr = nr + 1; # Avisa que há mais um leitor
     |     SIGNAL; # Escolhe o próximo para acordar
     |             # Aqui liberaremos o 'e' para outros rodarem
     |
@@ -87,11 +87,11 @@ Passagem de bastão e o problema de leitores e escritores
     |         V(e); # Liberamos o semáforo de ação atômica
     |         P(w); # Dormimos esperando permissão para rodar
     |     }
-    |     nw = nw + 1; # Avisa mais um leitor
+    |     nw = nw + 1; # Avisa que há mais um leitor
     |     SIGNAL; # Escolhe o próximo para acordar
     |             # Aqui liberaremos o 'e' para outros rodarem
     |
-    |     lê o BD;
+    |     escreve no BD;
     |
     |     # <nw = nw - 1;>
     |     P(e);

@@ -14,7 +14,7 @@ Passagem de bastão e o problema de leitores e escritores
     |     nr = nr + 1;
     |     SIGNAL; # SIGNAL_1
     |
-    |     read database;
+    |     read from database;
     |
     |     # <nr = nr - 1;>
     |     P(e);
@@ -31,7 +31,7 @@ Passagem de bastão e o problema de leitores e escritores
     |     nw = nw + 1;
     |     SIGNAL; # SIGNAL_3
     |
-    |     write database;
+    |     write on database;
     |
     |     # <nw = nw - 1;>
     |     P(e);
@@ -93,7 +93,7 @@ Passagem de bastão e o problema de leitores e escritores
         |   # Consequências:
         |   # Não precisa verificar `nr > 0` e `nw == 0`
         |
-        |   if (dr > 0) { dr = dr 0 1; V(r); }
+        |   if (dr > 0) { dr = dr + 1; V(r); }
         |   else V(e);
         | }
 
@@ -132,7 +132,7 @@ Passagem de bastão e o problema de leitores e escritores
         |   # nr == 0, nw == 0
         |   #
         |   # Consequências:
-        |   # Só precisa verificar se há provesso querendo
+        |   # Só precisa verificar se há processos querendo
         |   # ser acordados
         |
         |   if (dr > 0) {
@@ -164,13 +164,13 @@ Passagem de bastão e o problema de leitores e escritores
           | process Reader {
           |   ...
           |     if (nw > 0 or dw > 0) { dr = dr + 1; V(e); P(r); }
-          |     #             ^^-- prioridade aos escritores
+          |     #             ^^-- prioridade para os escritores
           |   ...
           | }
         
-        - Trocamos a ordem de leitores e escritores nos if e esilf
+        - Trocamos a ordem de leitores e escritores nos if e elsif
           relacionados a 'dw' e 'dr' (SIGNAL_1 e SIGNAL_3 ficam de
-          fora, pois são independentes destas versões):
+          fora, pois são independentes destas variáveis):
 
           | void SIGNAL_2() { # depois de ler a base
           |
@@ -183,6 +183,7 @@ Passagem de bastão e o problema de leitores e escritores
           |   else {
           |     V(e);
           |   }
+          | }
 
           | void SIGNAL_4() { # depois de escrever na base
           |
@@ -198,7 +199,7 @@ Passagem de bastão e o problema de leitores e escritores
           | }
 
 * Seria ideal, porém, que construíssemos um algoritmo justo entre
-  classes de processo (alternando os acessos se houvr processos das
+  classes de processo (alternando os acessos se houver processos das
   duas classes esperando).
 
     1. Envie um novo leitor para o final da fila se houver um escritor
