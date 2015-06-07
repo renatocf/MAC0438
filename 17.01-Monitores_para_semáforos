@@ -1,0 +1,214 @@
+Semáforos usando monitores
+===========================
+
+* Passo a passo para criar monitores:
+    - Passo 1: Definir os procedimentos
+    - Passo 2: Definir as variáveis de condição
+    - Passo 3: Definir os comandos de inicialização
+    - Passo 4: Testar a implementação do monitor com as diferentes
+               disciplinas de sinalização (opcional).
+
+    - O passo 4 é opcional, porque (de forma geral) vamos focar na
+      implementação 'sinaliza e continua'.
+
+* Semáforos com monitores
+    - Passo 1: procedimentos
+        - Nos semáforos, tinhamos 2 operações básicas: P e V
+        - Para este monitor, precisaremos de 2 procedimentos
+          equivalentes.
+
+        - Psem: decrementa o semáforo se ele for positivo. Enquanto não
+          for positivo, espera em algum lugar.
+        - Vsem: incrementa o semáforo.
+
+    - Passo 2: variáveis de condição
+        - Criamos variáveis de condição para cada condição que faz um
+          processo dormir.
+
+        - 1 variável de condição para fazer os processos dormirem se o
+          semáforo for zero ('wait' e 'signal' nessa variável).
+
+    - Passo 3: comandos de inicialização
+        - Apenas definir o valor inicial do semáforo.
+
+    - 1ª implementação (correta para S&E)
+        
+        | monitor Semaphore {
+        |   int s = 0; # passo 2
+        |   cond var;  # passo 3
+        |
+        |   procedure Psem() {
+        |     if (s == 0) wait(var);
+        |     s = s - 1;
+        |   }
+        |
+        |   procedure Vsem() {
+        |     s = s + 1;
+        |     signal(var);
+        |   }
+        | }
+
+    - Passo 4: testando com S&E e S&C
+        - Para fazermos o teste, precisamos fazer uma simulação do
+          funcionamento do monitor.
+
+        - S&E
+            - 1 processo (P0) rodou o Psem, viu 's == 0' e foi dormir na
+              fila da variável de condição.
+
+                | P1 | P4 | P3 | P2 | (   ) -> Fila de entrada
+
+                | P0 |    |    |    | (   ) -> Fila de var
+
+                [    ] Monitor
+
+            - 1 processo (P1) roda o Vsem, incrementa o 's' e roda o
+              signal, vai acordar o processo no início da fila de 'var'.
+
+                | P1 | P4 | P3 | P2 | (   ) -> Fila de entrada
+
+                |    |    |    |    | (   ) -> Fila de var
+
+                [ P0 ] Monitor
+
+            - O processo que estava dormindo e agora pode fazer
+              's = s - 1', com certeza que o semáforo é positivo.
+                - OK. O único problema aconteceria se o semáforo
+                  ficasse com valor negativo.
+                - Também temos justiça, porque sempre acordamos o que
+                  entrou primeiro na fila.
+
+        - S&C
+                |    | P3 | P2 | P1 | (   ) -> Fila de entrada
+
+                |    |    |    |    | (   ) -> Fila de var
+
+                [ P0 ] Monitor
+
+            - 1 processo (P0) rodou o Psem, viu 's == 0' e foi dormir na
+              fila da variável de condição.
+
+                |    | P3 | P2 | P1 | (   ) -> Fila de entrada
+
+                |    |    |    | P0 | (   ) -> Fila de var
+
+                [    ] Monitor
+
+            - 1 processo (P1) roda o Vsem, incrementa o 's' e acorda
+              o primeiro processo na fila de 'var' (P0). P1 continua
+              e P0 volta para a entrada.
+
+                |    | P0 | P3 | P2 | (   ) -> Fila de entrada
+
+                |    |    |    |    | (   ) -> Fila de var
+
+                [ P1 ] Monitor
+
+            - P2 rodou Psem (semáforo 's' vale 0)
+
+                |    |    | P0 | P3 | (   ) -> Fila de entrada
+
+                |    |    |    |    | (   ) -> Fila de var
+
+                [ P2 ] Monitor
+
+            - P3 rodou Psem (semáforo não muda e P3 vai dormir na
+              fila de 'var).
+
+                |    |    |    | P0 | (   ) -> Fila de entrada
+
+                |    |    |    |    | (   ) -> Fila de var
+
+                [ P3 ] Monitor
+
+            - P0 finalmente roda! E vai continuar da linha que parou
+              ao rodar o wait. Nessa hora faz 's = s - 1'.
+
+                |    |    |    |    | (   ) -> Fila de entrada
+
+                |    |    |    |    | (   ) -> Fila de var
+
+                [ P0 ] Monitor
+
+            - Problemas
+                - P0 vai decrementar o valor do semáforo para -1,
+                  uma violação do invariante dos semáforos.
+
+    - 2ª implementação (correta para S&C)
+        
+        - Para corrigirmos o problema do valor do semáforo, podemos
+          trocar o 'if' por um 'while', que vai garantir se a condição
+          que fez o 'wait' continua verdadeira.
+
+        | monitor Semaphore {
+        |   int s = 0; # passo 2
+        |   cond var;  # passo 3
+        |
+        |   procedure Psem() {
+        |     while (s == 0) wait(var);
+        |     s = s - 1;
+        |   }
+        |
+        |   procedure Vsem() {
+        |     s = s + 1;
+        |     signal(var);
+        |   }
+        | }
+
+        - Problemas
+            - Não existe justiça: o processo P3, que chegou DEPOIS
+              de P0, roda antes dele. P0 pode sofrer starvation.
+
+            - Esse problema acontece porque depois de acordar o
+              processo, temos 's = s + 1', e outros processos que estão
+              na entrada acabam vendo. Gostaríamos que apenas os
+              processos que já passaram pela fila do 'var' entrem.
+
+    - 3ª implementação (correta para S&C)
+
+        - Para conseguirmos "esconder" o incremento do valor de 's',
+          fazemos com que este incremento aconteça indiretamente por
+          meio do 'signal' - que acordará os processos qe entraram
+          na fila de espera de 'var'. Essa fila garantiraá a justiça.
+          Os incrementos reais dos semáforos acontecerão APENAS
+          quando não houver nenhum processo rodando.
+
+        | monitor Semaphore {
+        |   int s = 0; # passo 2
+        |   cond var;  # passo 3
+        |
+        |   procedure Psem() {
+        |     if (s == 0) wait(var);
+        |     else s = s - 1;
+        |   }
+        |
+        |   procedure Vsem() {
+        |     if (emtpy(var)) s = s + 1;
+        |     else  signal(var);
+        |   }
+        | }
+
+        - Este processo de acordar de forma "escondida" para a entrada
+          é chamada de "passagem de condição".
+
+* Semáforos x Monitores
+    - Para fazer um processo dormir:
+        - P() em semáforos
+            - Só faz o processo formir se o semáforo for 0.
+        - wait() em monitores
+            - Sempre faz o processo dormir.
+
+    - Para fazer um processo acordar
+        - V() em semáforos
+            - Sempre imcrementa o valor do semáforo.
+        - signal() em monitores
+            - Não faz nada se a fila estiver varia.
+
+    - Resumindo: os semáforos, em geral, guardam uma memória de
+      eventos do passado, enquanto os monitores não têm memória.
+
+* Daqui para frente, vamos considerar S&C, a não ser que o problema
+  especifique S&E.
+    - S&C permite o escalonamento de processos com prioridade, ao
+      devolver o processo para a fila de entrada.
+    - Unix, Java, Pthreads, etc.

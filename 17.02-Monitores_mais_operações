@@ -1,0 +1,34 @@
+Mais operações em variáveis de condição
+========================================
+
+* Operações adicionais nas variáveis de condição
+    - wait com prioridade
+
+        - Implementação
+            | wait(var, rank)
+        - 'rank' é um inteiro que define onde o processo vai esperar
+           na fila da variável de condição.
+        - Quanto menor o 'rank', mais próximo do início da fila.
+
+        - Ex:
+            |    |    | P1 | P2 | P0 | (    )
+
+            P0 -> wait(var, 1)
+            P1 -> wait(var, 4)
+            P2 -> wait(var, 2)
+
+        - no wait com prioeridade, em caso de empate, o processo
+          mais velho fica na frente.
+
+    - minrank(var)
+        - Devolve o valor do 'rabk' do primeiro processo esperando na
+          fila de 'var' (se a fila está vazia ou se a fila não tem
+          prioridade, retorna um valor arbitrário).
+
+    - signal_all(var)
+        - Acorda todos os processos que estão formindo na fila de 'var'
+          (ou seja, todo mundo vai para a fila de entrada na S&C).
+        - O signal_all() não é bem definido na S&E.
+
+        - Equivalente a um:
+            while (!empty(var)) signal(var);
