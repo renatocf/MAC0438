@@ -1,0 +1,84 @@
+Implementação de monitores com semáforos
+=========================================
+
+* Motivação
+    - A maioria das bibliotecas e sistemas operacionais já suporta
+      semáforos, mas não monitores (além das linguagens).
+    - Para parender como, de fato, implementar um monitor.
+
+* Implementação
+    - Para fazermos a implementação dos monitores, precisamos fazer:
+
+        1. Código de entrada (chamado semre que um processo rodar o
+           'call' em algum procedimento do monitor). Isso garantirá a
+           exclusão mútua.
+
+        2. Cógigo de saída (chamado sempre que um processo terminar de
+           rodar um procedimento do monitor).
+
+        3. Códigos que implementam 'wait' e 'signal', além das outras
+           operações avançadas sobre variáveis de condição.
+
+    - Código de entrada e código de saída
+        - Tem por objetivo garantir a exclusão mútua
+        - Vamos ter de usar 1 semáforo para garantir essa exclusão
+          mútua (semáforo m).
+
+        - Precisamos saber:
+            - Como inicializar? 1
+            - Quando fazer P(m)? No código de entrada.
+            - Quando fazer V(m)? No código de saída.
+
+    - wait(cv)
+        - Liberar a exclusão mútua (V(m)) do monitor e enviar o processo
+          para a fila da variável de condição 'cv' até que ele acorde com
+          um signal.
+          - P em um semáforo privado do processo
+          - Vamos precisar de uma fila (existe uma fila FIFO no nosso SO).
+
+    - signal(cv)
+        - Verificar se a fila 'cv' está vazia. Se estiver, não faz nada.
+          Se não estiver, decrementa o contador da fila, remove o
+          processo mais velho da fila e roda um V no semáforo desse
+          processo.
+
+    - 1ª versão (correta)
+        
+        # Variáveis compartilhadas
+
+        sem m = 1; /* 1 semáforo por monitor */
+        int cvN = 0 /* 1 contador por variável de condição */
+        queue cvDelay /* 1 fila por variável de condição */
+        sem private[N]; /* 1 posição por processo */
+
+        | # Entrada do monitor  # 
+        | P(m);                 # Vai ter de ser colocado
+        |                       # no 'call' de todos os
+        | # Saída do monitor    # procedimentos
+        | V(m);                 # 
+
+        # wait
+        | wait(cv):
+        |   cvN++;
+        |   insere id do processo em cvDelay;
+        |   V(m);
+        |   P(private[id]);
+        |   P(m); # Quando o processo acordar, ele precisa
+        |         # "religar" a exclusão mútua
+
+        # signal
+        | signal(cv):
+        |   if (cvN > 0) {
+        |     cvN--;
+        |     remove id do processo de cvDelay;
+        |     V(private[id]);
+        |   }
+
+        # Exercício:
+        # Implementar as outras funções 'signal_all', 'wait' com
+        # prioridade, 'empty' e 'minrank'.
+
+* Em geral, a implementação mais comum de monitores utiliza os
+  semáforos, pois eles são elementos comuns dos sistemas operacionais.
+  Porém, os monitores são mais simples para a modelagem de muitos
+  problemas concorrentes.

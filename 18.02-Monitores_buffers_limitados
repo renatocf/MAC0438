@@ -1,0 +1,77 @@
+Monitores e o problema dos buffers limitados
+=============================================
+
+* Relembrando o problema:
+    - Produtores e consumidores lêem/escrevem num buffer de tamanho
+      fixo, produzindo/consumindo 'rajadas' de dados.
+
+                produtor1       consumidor1
+              .´              .´      .- primeira posição libre
+            | x | y | a | b | c | d |   |   |   |   |
+              'x.             'x.
+                produtor2       consumidor2
+ 
+    - O buffer continuará sendo circular
+
+* Relembrando
+    - Produtores e consumidores comunicam-se por um buffer de n
+      posições.
+    - O buffer representa uma fila de mensagens.
+    - Os produtores colocam mensagens no fim da fila.
+    - Os consumidores recebem mensagens lendo o início da fila.
+
+    - A sincronização tem de evitar mensagens depoisitadas se a fila
+      estiver cheia ou mensagens lidas se a fila está vazia.
+
+    - O buffer é o recurso compartilhado (o monitor vai ser o buffer).
+        - Essa técnica NÃO PODE ser utilizada para o problema dos
+          leitores e escritores, pois limitaria vários leitores lendo ao
+          mesmo tempo. Nesse processo, o monitor precisa servir como
+          sistema de controle de acesso à base de dados.
+
+* Implementação
+    - Para criar o monitor, precisamos de dois itens:
+        - Procedimentos (ações a serem tomadas)
+            - store    # produtores executam
+            - retrieve # consumidores executam
+
+        - Variáveis de condição (condições em que os processos
+          precisam dormir)
+            - 1 variável para quando a fila estiver cheia (produtores
+              irão dormir esperando espaço liberado no buffer).
+            - 1 variável para quando a fila estiver vazia (consumidores
+              irão dormir esperando o buffer ser preenchido).
+
+    - 1ª versão (correta)
+        
+        | monitor LimitedBuffer {
+        |   typeT buf[n];
+        | 
+        |   int front = 0; # Primeira posição com mensagem
+        |   int rear = 0;  # Primeria posição vazia
+        |   int count = 0; # Quandidade de posições com mensagens
+        |
+        |   cond not_full;  # Sinalizado quando count < n
+        |   cond not_empty; # Sinalizado quando count > 0
+        |
+        |   procedure store(typeT data) {
+        |     while (count == n) wait(not_full);
+        |     buf[rear] = data; rear = (rear + 1) % n; count++;
+        |     signal(not_empty);
+        |   }
+        |
+        |   procedure retrieve(typeT &result) {
+        |     while (count == 0) wait(not_empty);
+        |     result = buf[front]; front = (front + 1) % n; count--;
+        |     signal(not_full);
+        |   }
+        | }
+
+    - Observações
+        - É importante termos um 'while' no início da linha porque, na
+          hora de executar, alguém pode ter chegado antes (S&C).
+        - Nesse problema, estamos rodando os 'signal' de forma
+          incondicional. Porém, isso pode ser ineficiente caso a
+          condição do while seja falsa várias vezes.
+        - O ideal é que o signal seja executado quando houver uma grande
+          chance do processo, de fato, rodar.
