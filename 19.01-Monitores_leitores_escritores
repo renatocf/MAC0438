@@ -1,0 +1,92 @@
+Monitores e o problema dos leitores e escritores
+=================================================
+
+* No problema dos buffers limitados, conseguimos colocar a própria fila
+  de leitura/escrita como monitores.
+
+* Entretanto, no problema dos leitores e escritores, a exclusão mútua
+  garantida pelo monitor é indesejada: queremos que múltiplos leitores
+  acessem a base de dados AO MESMO TEMPO. Se usássemos o monitor na
+  fila, a leitura seria sequencial, e poderíamos fazer um ataque de
+  negação de serviços apenas com uma leitura grande.
+
+* Conceitualmente, podemos definir o problema dos leitores e escritores
+  como sendo:
+    1. Leitores lêem uma base de dados
+    2. Escritores alteram a base de dados
+    3. Leitores podem acessar a base simultaneamente
+    4. Escritores requerem acesso exclusivo
+
+    - Não podemos considerar o BD como o monitor, poque se isso for
+      feito, a restrição 3 não seria respeitada.
+    - O problema dos filósofos famintos tem a mesma restrição: colocar o
+      sistema todo no monitor restringiria mais de um filósofo comer ao
+      mesmo tempo.
+
+* Vamos implementar o monitor como um controle de acesso à base de
+  dados.
+  - O monitor pode ser considerado um gargalo no sistema, mas
+    considerando o tempo de leitura/escrita no disco, esse valor tende
+    a ser desprezível.
+
+* Lembrando (condições):
+    - Evitar (m > 0 && nw > 0) || nw > 1
+    - Garantir (m == 0 || nw == 0) && nw <= 1
+
+    - Contadores:
+        - nr: número de leitores
+        - nw: número de escritores
+
+    - Leitores e escritores eventualmente chegarão numa "hora
+      indesejada" e precisarão dormir (caso isso aconteça).
+
+* Para criar o monitor, precisamos de dois itens:
+    - Procedimentos (ações a serem tomadas)
+        - requireRead()    # executados pelos leitores
+        - releaseRead()    # 
+        - requireWrite()   # executados pelos escritores
+        - releaseWrite()   # 
+
+    - Variáveis de condição (condições em que os processos
+      precisam dormir)
+        - ok_to_read:
+          - 1 variável para quando os leitores puderem ler
+            (leitores dormem quando 'nw == 0').
+        - ok_to_write:
+          - 1 variável para quando os escritores puderem escrever.
+            (escritores dormem quando 'nr > 0 || nw > 0').
+
+    - 1ª versão (correta, injusta):
+        
+        | monitor AcessoRW {
+        |   int nr = 0, nw = 0;
+        |   cond ok_to_read;  # Sinaliza quando 'nw == 0'
+        |   cond ok_to_write; # Sinaliza quando 'nr == 0' e 'nw == 0'
+        |
+        |   procedure requireRead() {
+        |     while (nw > 0) wait(ok_to_read);
+        |     nr = nr + 1;
+        |   }
+        |
+        |   procedure releaseRead() {
+        |     nr = nr -1;
+        |     if (nr == 0) signal(ok_to_write);
+        |     # Não precisamos fazer 'nw == 0', pois se houvesse com
+        |     # o leitor não teria chegado aqui.
+        |   }
+        |
+        |   procedure requireWrite() {
+        |     while (nw > 0 || nr > 0) wait(ok_to_write);
+        |     nw = nw + 1;
+        |   }
+        |
+        |   procedure releaseWrite() {
+        |     nw = nw - 1;
+        |     signal(ok_to_write);
+        |     signal_all(ok_to_read);
+        |     # Prioridade poderia ser definida dando preferência aos
+        |     # leitores ou aos escritores, dependendo do que for
+        |     # desejado. Não é necessário fazer testes, porque
+        |     # só tínhamos um escritor acessando.
+        |   }
+        | }

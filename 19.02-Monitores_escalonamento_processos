@@ -1,0 +1,71 @@
+Monitores e o problema do escalonamento de processos
+=====================================================
+
+* Existe um recurso compartilhado e é necessário escalonar os processos
+  para acessar o recurso.
+
+* Um processo, quando for acessar o recurso, deve chamar 'request()'.
+* Um processo, quando for terminar o recurso, deve chamar 'release()'.
+
+* Cada processo tem um intevalo de tempo que vai gastar acessando o
+  recurso. Esses processos devem acessar de modo que a prioridade é
+  definida pelo tempo mais curto (Shortest Job First).
+    - Nosso escalonador de processos será o monitor.
+
+* Para criar o monitor, precisamos de dois itens:
+    - Procedimentos (ações a serem tomadas)
+        - request(time)
+            - Espera até o recurso ficar livre ou acessar o recurso.
+            - Precisará fazer um 'wait'.
+        - release()
+            - Libera o recurso e acorda o processo com o tempo
+              mais curto.
+            - Precisará fazer um 'signal'.
+
+    - Variáveis de condição (condições em que os processos
+      precisam dormir)
+        - Precismoas de 1 variável booleana que diz se o processo
+          está pronto para executar.
+
+    - 1ª implementação (correta, injusta)
+
+        | monitor ShortestJobFirst {
+        |   bool free = true;
+        |   cont turn;
+        |
+        |   procedure request(int time) {
+        |     while (!free) wait(turn, time);
+        |     free = false;
+        |   }
+        |
+        |   procedure release() {
+        |     free = true;
+        |     signal(turn);
+        |   }
+        | }
+
+        - Problemas
+            - Nessa situação, ao mostrarmos 'free = true' para o mundo
+              exterior, não temos garantia de que o processo que será
+              rodará sua condição é o que acabou de ser acordado. Se um
+              processo chegasse entre o 'free = true' e o
+              'signal(turn)', esse processo executaria pois passaria
+              pelo 'request'. Para resolvermos, precisamos usar
+              PASSAGEM DE CONDIÇÃO.
+
+    - 2ª implementação (correta, justa)
+        
+        | monitor ShortestJobFirst {
+        |   bool free = true;
+        |   cont turn;
+        |
+        |   procedure request(int time) {
+        |     if (!free) wait(turn, time);
+        |     else free = false;
+        |   }
+        |
+        |   procedure release() {
+        |     if (emtpy(turn)) free = true;
+        |     else signal(turn);
+        |   }
+        | }
