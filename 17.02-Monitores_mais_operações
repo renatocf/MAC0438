@@ -17,11 +17,11 @@ Mais operações em variáveis de condição
             P1 -> wait(var, 4)
             P2 -> wait(var, 2)
 
-        - no wait com prioeridade, em caso de empate, o processo
+        - No wait com prioridade, em caso de empate, o processo
           mais velho fica na frente.
 
     - minrank(var)
-        - Devolve o valor do 'rabk' do primeiro processo esperando na
+        - Devolve o valor do 'rank' do primeiro processo esperando na
           fila de 'var' (se a fila está vazia ou se a fila não tem
           prioridade, retorna um valor arbitrário).
 
