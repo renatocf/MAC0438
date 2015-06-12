@@ -30,7 +30,7 @@ Sincronização com monitores
             | # Cria uma variável de condição 'nomeDaVariável'
             | cond nomeDaVariável;
 
-        - São filas que mantém um processo dormindo.
+        - São filas que mantêm um processo dormindo.
         - O valor não é visível para o programador.
 
     - Como manipular as variáveis de condição?
