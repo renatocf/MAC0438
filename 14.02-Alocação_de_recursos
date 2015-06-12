@@ -5,21 +5,21 @@ Alocação de recursos
   ter acesso a um recurso (entrar na seção crítica, acessar um BD, pegar
   o garfo da mesa, etc.)
 
-* Até agora, porém, não nos preocupamos, por exemplo, com qual leitor
-  fazia o acesso à base dentre vários (o que pode ser injusto).
+* Até agora, porém, não nos preocupamos com qual leitor fazia o acesso
+  à base dentre os vários leitores (o que pode ser injusto).
 
 * Essa diferenciação é útil em sistemas de tempo real, clusters, etc.
 
 * Solução geral
-    - O procedimento precisa ser seguido por TODOS os processos.
+    - O seguinte procedimento precisa ser seguido por TODOS os processos.
 
     1. Processos que queiram acessar um recurso têm de executar o
        procedimento 'request', informando quantas unidades do recurso
-       compartilhado quer acessar e também sua identidade. A ideia é
+       compartilhado querem acessar, além de suas identidades. A ideia é
        só liberar o acesso quando todas as unidades requisitas estiverem
        disponíveis.
 
-    2. Após usar o recurso, um processo libera para outros executando
+    2. Após usar os recursos, um processo os libera para outros, executando
        o procedimento 'relesase'.
 
 * Com base nesta solução, podemos montar um protótipo destas funções:
