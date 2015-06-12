@@ -3,8 +3,8 @@ Monitores: Introdução
 
 * Relembrando
     - Vimos, até o momento, algumas formas de garantir a sincronização
-      entre processos: await's (instrumento teórico) e suas múltiplas
-      implementações algoritmicas; e semáforos.
+      entre processos: await's (instrumento teórico), com suas múltiplas
+      implementações algorítmicas; e semáforos.
 
     - Semáforos: vantagens
         - Facilitam a implementação de exclusão mútua
