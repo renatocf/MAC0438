@@ -25,8 +25,8 @@ Disciplinas de sinalização
           para rodar em algum momento no futuro e o que foi acordado
           assume o controle do monitor.
 
-    - Sinalize e Espera com Urgância
-        - Põe o processo que cahmou o 'signal' no início da fila de
+    - Sinalize e Espera com Urgência
+        - Põe o processo que chamou o 'signal' no início da fila de
           entrada do monitor.
 
 * Podemos resumir as políticas com a seguinte máquina de estados
