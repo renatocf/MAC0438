@@ -67,7 +67,7 @@ Monitores e o problema dos buffers limitados
         |   }
         | }
 
-    - Observações￼
+    - Observações
         - É importante termos um 'while' no início da linha porque, na
           hora de executar, alguém pode ter chegado antes (S&C).
         - Nesse problema, estamos rodando os 'signal' de forma
