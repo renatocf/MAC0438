@@ -1,0 +1,122 @@
+Monitores e o problema do Barbeiro Dorminhoco
+==============================================
+
+* Pode ser usado para modelar problemas onde seja necessário a
+  sincronização entre cliente e servidor.
+
+                       .-----------------------.
+        ------------>  |       Barbeiro        |
+        Entrada da                             `.  
+        Barbearia   `.         Cliente           `.
+                      `.                       
+                       |  Cliente     Cliente  | ---------->
+                       | esperando   esperando | Saída da
+                       '-----------------------' Barbearia
+
+    - Uma barbearia com 2 portas e algumas cadeiras
+    - Clientes entram pela porta de entrada e saem pela porta de saída.
+    - A barbearia é pequena, então não máximo um cliente ou o barbeiro
+      podem se movimentar lá dentro (a barbearia vai ser o monitor).
+    - O barbeiro só corta cabelos infinitamento. Se não há cliente, ele
+      dorme na cadeira e do barbeiro.
+
+    1. Quando um cliente chega e encontra o barbeiro dormindo, ele
+       acorda o barbeiro, senta na cadeira do barbeiro e dorme enquanto
+       o barbeiro corta seu cabelo.
+    2. Após cortar o cabelo, o barbeiro abre a porta de saída para o
+       cliente e fecha quando o cliente sai.
+    3. Se quando o cliente chega, o barbeiro está ocupado, o cliente
+       dorme na cadeira de espera.
+    4. Se o barbeiro fecha a porta e há algum cliente esperando, ele
+       acorda o cliente e espera ele sentar na cadeira do barbeiro.
+
+* Para modelar o problema, precisaremos de:
+    - 3 procedimentos
+        - get_haircut
+            - Chamada pelos clientes
+        - get_next_customer
+            - Chamada repetidamente pelo barbeiro
+        - finished_cut
+            - Chamado pelo barbeiro quando terminar um corte.
+
+    - Variáveis contadoras
+        - Vamos precisar de variáveis para guardar o status de cada
+          processo (representa as várias cadeiras nas quais os
+          processos podem dormir).
+
+        - Variáveis contadoras:
+            - cinchair (quantas vezes clientes sentaram na cadeira
+                        do barbeiro).
+            - cleave   (quantas vezes clientes saíram da barbearia).
+            - bavail   (quantas vezes o barbeiro ficou disponível).
+            - bbusy    (quantas vezes o barbeiro corta o cabelo de
+                        um cliente).
+            - bdone    (quantas vezes o barbero termina um corte).
+
+            - Precisamos relacionar as variáveis para que elas
+              descrevam o workflow da barbearia:
+                - cinchair >= cleave
+                    (para um cliente sair, ele deve ter cortado
+                     o cabelo antes (ou seja, estado na cadeira
+                     do barbeiro)
+                - bavail >= bbusy >= bdone
+                    (para ter terminado, o barbeiro já esteve ocupado,
+                     e já teve de estar disponível)
+                - cinchair <= bavaial
+                    (para ter 'n' clientes na cadeira, ela
+                     já deve ter estado disponível 'n' vezes)
+                - bbusy <= cinchair 
+                    (barbeiro não começou a cortar o cabelo,
+                     mas o cliente está sentado na cadeira)
+                - cleave <= bdone
+                    (cliente só deixa a barbearia quando o
+                     barbeiro terminou de cortar o cabelo dele.
+                     Esses números são diferentes no tempo em
+                     que o barbeiro leva para sair da barbearia)
+
+        - De forma geral, estamos mais preocupados com as DIFERENÇAS
+          entre variáveis do que com seus valores reais. Vamos definir
+          (e usar) variáveis para as diferenças entre elas.
+            - barber = bavaial - cinchair
+            - chair = cinchar - bbusy
+            - open = bdone - cleave
+
+* 1ª solução (correta)
+
+    | monitor Barber {
+    |   int barber = 0;
+    |   int chair = 0;
+    |   int open = 0;
+    |
+    |   cond barber_available; # sinaliza que barber > 0
+    |                          # (ou seja: barbeiro disponível)
+    |   cond char_occupied;    # sinaliza se chair > 0
+    |                          # (ou seja, a cadeira está disponível)
+    |   cond door_opened;      # Sinaliza se open > 0
+    |                          # (ou seja, há um cliente saindo)
+    |   cond customer_left;    # Sinaliza se open == 0
+    |                          # (ou seja, um cliente saiu)
+    |   
+    |   procedure get_haircut() {
+    |     while (barber == 0) wait(barber_available);
+    |     barber--;
+    |     chair++;
+    |     signal (chair_occupied);
+    |     while (open == 0) wait(door_opened);
+    |     open--;
+    |     signal(customer_left);
+    |   }
+    |
+    |   procedure get_next_customer() {
+    |     barber++;
+    |     signal(barber_available);
+    |     while (chair == 0) wait(chair_occupied);
+    |     chair--;
+    |   }
+    |
+    |   procedure finished_cut() {
+    |     open++;
+    |     signal(door_opened);
+    |     while(open > 0) wait(customer_left);
+    |   }
+    | }

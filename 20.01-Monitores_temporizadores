@@ -1,0 +1,89 @@
+Monitores e temporizadores
+===========================
+
+* Temporizador
+    - Permite que um processo "durma" por um determinado intervalo de
+      tempo.
+    - Comum em SOs para permitir que um usuário programe um processo
+      para ser executado no futuro (ex: 'cron', 'at'). Em linguagens de
+      programação, seria semelhante às funções 'sleep' e 'usleep'.
+
+* 1º solução (correta, ineficiente)
+        
+    - O recurso será um relógio lógico.
+    - O relógio vai ser acessado por processos que querem dormir.
+        - Vamos  criar o procedimento 'delay(intervalo)'.
+        - Os process que querem dormir vão chamar esse procedimento. Os
+          processos formirão numa fila de variável de combinação até ter
+          passar um intervalo u.t.
+    - O relógio precisa saber quando passa 1 tick, ou 1 unidade de
+      tempo.
+        - Vamos criar um procedimento 'tick()'.
+        - Vamos considerar que existe um processo de alta prioridade que
+          roda esse tick de 1 em 1 u.t. (isso pode ser um temporizador
+          de hardware).
+
+    - Variáveis
+        - Precisamos de 1 variável inteira 'tod' ('time of day') para
+          marcar quanto tempo passou. Sempre é >= 0 e é incrementada a
+          cada tick().
+        - Precisamos de 1 variável de condição 'check' para manter os
+          processos dormindo até ter passado 'intervalo' u.t.
+
+    - Quando um processo acorda?
+        - Precisamos calcular a hora de acordar.
+        - wake-time = tod + intervalo, vai ser uma variável local de
+          cada processo.
+
+    | monitor temporizador1 {
+    |   int tod = 0; # time of day
+    |   cond check;  # processos param nessa variável de condição
+    |
+    |   procedure delay(int intervalo) {
+    |     int wake_time = tod + intervalo;
+    |     while (wake_time > tod) wait(check);
+    |     #
+    |     # ^ CONDIÇÃO DE COBERTURA: o próprio processo verifica
+    |     #   se ele deve ou não acordar.
+    |     #
+    |   }
+    |
+    |   procedure tick() {
+    |     tod++;
+    |     signal_all(check);
+    |   }
+    | }
+
+    - Problemas
+        - Se os intervalos de tempo forem muito grandes, essa
+          construção é MUITO INEFICIENTE, porque cada processo
+          será acordado a cada tick (que pode ser muito pequeno).
+        - Funciona, mas é ineficiente se a quantidade de alarmes
+          falsos for muito alta (nesse caso, se os intervalos
+          fossem muito grandes).
+
+* 2ª solução (correta, mais eficiente)
+    - Vamos verificar os processos na ordem que eles precisam
+      acordar.
+    - Se encontramos um prcesso que não precisa acordar, não olhamos os
+      próximos (pois o tempo deles SERÁ maior).
+    - Conseguimos fazer isso usando wait com prioridade, ordenando pelo
+      'wake_ime'.
+
+    | monitor temporizador2 {
+    |   int tod = 0;
+    |   cond check;
+    |
+    |   procedure delay(intervalo) {
+    |     int wake_time;
+    |     wake_time = tod + intervalo;
+    |     if (wake_time > tod)
+    |       wait(check, wake_time);
+    |   }
+    |
+    |   procedure tick() {
+    |     tod++;
+    |     while (!empty(check) && minrank(check) <= tod)
+    |       signal(check);
+    |   }
+    | }
