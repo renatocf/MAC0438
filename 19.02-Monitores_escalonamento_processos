@@ -7,13 +7,13 @@ Monitores e o problema do escalonamento de processos
 * Um processo, quando for acessar o recurso, deve chamar 'request()'.
 * Um processo, quando for terminar o recurso, deve chamar 'release()'.
 
-* Cada processo tem um intevalo de tempo que vai gastar acessando o
+* Cada processo tem um intervalo de tempo que vai gastar acessando o
   recurso. Esses processos devem acessar de modo que a prioridade é
   definida pelo tempo mais curto (Shortest Job First).
     - Nosso escalonador de processos será o monitor.
 
 * Para criar o monitor, precisamos de dois itens:
-    - Procedimentos (ações a serem tomadas)
+    - Procedimentos (ações a serem tomadas):
         - request(time)
             - Espera até o recurso ficar livre ou acessar o recurso.
             - Precisará fazer um 'wait'.
@@ -24,7 +24,7 @@ Monitores e o problema do escalonamento de processos
 
     - Variáveis de condição (condições em que os processos
       precisam dormir)
-        - Precismoas de 1 variável booleana que diz se o processo
+        - Precisamos de 1 variável booleana que diz se o processo
           está pronto para executar.
 
     - 1ª implementação (correta, injusta)
@@ -46,12 +46,11 @@ Monitores e o problema do escalonamento de processos
 
         - Problemas
             - Nessa situação, ao mostrarmos 'free = true' para o mundo
-              exterior, não temos garantia de que o processo que será
-              rodará sua condição é o que acabou de ser acordado. Se um
-              processo chegasse entre o 'free = true' e o
-              'signal(turn)', esse processo executaria pois passaria
-              pelo 'request'. Para resolvermos, precisamos usar
-              PASSAGEM DE CONDIÇÃO.
+              exterior, não temos garantia de que o processo que rodará 
+              é o que acabou de ser acordado. Se um processo chegasse
+              entre o 'free = true' e o 'signal(turn)', esse processo
+              executaria, pois passaria pelo 'request'. Para resolvermos,
+              precisamos usar PASSAGEM DE CONDIÇÃO.
 
     - 2ª implementação (correta, justa)
         
