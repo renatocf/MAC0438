@@ -1,0 +1,116 @@
+Troca de mensagens e o paradigma cliente-servidor
+==================================================
+
+* Servidor
+    - Um processo que repetidamente manipula requisições de processos
+      clientes.
+    - Mensagens podem ser usadas para enviar as requisições e as
+      respostas.
+    - Podemos enxergar exsse monitor como se fosse um monitor, só que
+      nesse caso, ele é um monitor ativo.
+    - Se já temos um monitor, temos como transformá-lo em um servidor.
+
+* 1º caso: monitor sem variáveis de condição e com 1 procedimento
+
+    | monitor Name {
+    |   variáveis permanentes;
+    |   código de inicialização;
+    |
+    |   procedure op (parâmetros) {
+    |     corpo de op;
+    |   }
+    | }
+
+    - Mapeando monitor para um processo Serivor com troca de mensagens:
+        1) Monitor 'Name'         => 1 processo servidor
+                                     ('process Server').
+        2) Variáveis permantentes => Variáveis locais do servidor
+        3) Simulação de um 'call' => Um cliente que vai rodar 'send()'
+                                     num canal de requisições e recebe a
+                                     resposta num canal de resposta.
+                                     O servidor repetidamente rodará
+                                     'receiver' no canal de requisições
+                                     e envia as respostas no canal de
+                                     respostas.
+
+        - IMPORTANTE:
+            - Cada cliente é independente. Então precisa de um vetor
+              de canais de saída.
+
+    - 1ª implementação
+
+        | chan request (int clienteID, tipos dos valores de entrada);
+        | chan reply[n] (tipos dos resultados);
+        |
+        | process Server {
+        |   int clienteID;
+        |   declarações de outras variáveis permantentes;
+        |   código de inicialização;
+        |
+        |   while (true) {
+        |     receive request (clientID, valores de entrada);
+        |     código da op;
+        |     send reply[clientID] (resultado);
+        |   }
+        | }
+        |
+        | process Client[i=0 to n-1] {
+        |   send request(i, argumentos);
+        |   receive reply[i] (argumentos);
+        | }
+
+* 2º caso: monitor sem variáveis de condição com múltiplos procedimentos
+
+    - Mudanças em relação ao 1º caso
+        - No request, teremos de informar qual procedimento será
+          executado.
+        - Precisaremos saber, para cada procedimento, quais são
+          os tipos dos seus arguments (vamos usar 'enum' e 'union').
+
+    - 1ª implementação
+        
+        | type op_kind = enum(op1, ..., opN);
+        |
+        | type arg_type = union(arg1, ..., argN);
+        | # Ex: arg1 => int, cahar, float, int
+        | #     arg2 => char
+        | #     arg3 => int, float
+        | #     ...
+        |
+        | type result_type = union(res1, ..., resN);
+        | # Ex: res1 => int
+        | #     res2 => char, int
+        | #     ...
+        |
+        | char request (int clientID, op_kind, arg_type);
+        | chan reply[n] (result_type);
+        |
+        | process Server {
+        |   int clientID; op_kind kind; arg_type args;
+        |   result_type results;
+        |
+        |   declarações de outras variáveis permanentes;
+        |   código de inicialização;
+        |
+        |   while (true) {
+        |       receive request (clientID, kind, args);
+        |       if (kind == op1) {
+        |         código do procedimento op1;
+        |       }
+        |       else if (kind == op2) {
+        |         código do procedimento op2;
+        |       }
+        |       else if (kind == opN) {
+        |         código do procedimento opN;
+        |       }
+        |       send reply[clientID] (results);
+        |   }
+        | }
+
+        | process Client[i=0 to n-1] {
+        |   arg_type myArgs;
+        |   result_type myResults;
+        |   colocar os argumentos em myArgs;
+        |   send request reply[i] (myResults);
+        |   receibe reply[i] myResults;
+        | }

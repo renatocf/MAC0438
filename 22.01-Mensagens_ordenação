@@ -1,0 +1,83 @@
+Troca de mensagens e filtros para ordenação de números
+=======================================================
+
+* Ordenação de números
+    - Escrevemos o algoritmo de um FILTRO (processo que vai "transformar
+      os dados"), que ordene um texto de números em ordem não
+      decrescente. Esses números são recebidos por um CANAL DE ENTRADA
+      e enviar para um CANAL DE SAÍDA.
+    - Consideraremos 2 canais de entrada por processo.
+
+    - Motivação
+        - x processo em 1 única máquina serão mais custosos do que
+          1 processo em x máquinas (em termos de PROCESSOAMENTO).
+
+    - Podemos simular uma rede (hardcoded) que peque uma certa
+      quantidade de números e as ordene:
+
+                .----.
+        100 --> | p1 |
+          2 --> |    |.  2,100.----.
+                '----' `.---->| p4 | 
+                .----.  .---->|    |.  
+          7 --> | p2 |.´  1,7 '----' `.
+          1 --> |    |                 `.  1,2,7,100  .----.
+                '----'                   `.---------->| p9 |
+                .----.                    .---------->|    |
+         20 --> | p3 |                  .´ 8,10,16,20 '----'
+         10 --> |    |.  10,20.----.  .´                ||
+                '----' `.---->| p5 |.´                  ||
+                .----.  .---->|    |                    ^^
+         16 --> | p4 |.´  8,16'----'            1,2,7,8,10,16,20,100
+          8 --> |    |
+                '----'
+
+    - Vamos usar um "sentinela" para marcar que o canal já enviou
+      tudo que tinha para enviar.
+
+* Algoritmo
+    - Cada filtro recebe valores ordenados de 2 canais  'in1' e 'in2' e
+      envia todos esses valores ordenados para um canal 'out'.
+    - Vou usar EOS ('End of Stream') para marcar o fim dos dados
+      no canal 'out'.
+    - comparar os valores recebidos nos 2 canais de entrada e enviar o
+      menor para frente.
+
+* 1ª implementação (correta)
+
+    | chan in1 (int), in2 (int), out (in);
+    | 
+    | process Merge {
+    |   int v1, v2;
+    |   receive in1 (v1);
+    |   receive in2 (v2);
+    | 
+    |   while (v1 != EOS and v2 != EOS) {
+    |     if (v1 <= v2) {
+    |       send out (v1);
+    |       receive in1 (v1);
+    |     }
+    |     else {
+    |       send out (v2);
+    |       receive in2 (v2);
+    |     }
+    |   }
+    | 
+    |   if (v1 == EOS) {
+    |     while (v2 == EOS) {
+    |       send out (v2);
+    |       receive in2 (v2);
+    |     }
+    |   }
+    |   else {
+    |     while (v1 != EOS) {
+    |       send out (v1);
+    |       receive in1 (v1);
+    |     }
+    |   }
+    |   send out (EOS);
+    | }
+
+    - Poblemas
+        - Fazer ordenação é muito simples, e em geral o overhead da
+          rede fará esse tipo de processamento ser ruim.
