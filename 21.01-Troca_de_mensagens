@@ -1,0 +1,86 @@
+Troca de mensagens
+===================
+
+* Mais uma forma de permitir a comunicação entre processos.
+
+* Como os processos estão em máquinas diferentes, o compartilhamento
+  deixa de ser via variáveis globais. Não há mais semáforos sem
+  monitores compartilhando uma área de memória.
+
+* Agora, teremos mensages que serão enviadas por CANAIS COMPARTILHADOS.
+    - Fila de mensagens que foram enviadas mas ainda não foram
+      recebidas.
+    - Representem o meio de comunicação entre os processos
+      (ex: placa de rede).
+    - OBS:
+        - mensagens são assíncronas
+        - canais são filas FIFO
+
+* Canais vãos se comportar como se fossem semáforos (o "comportamento"
+  do código vai ser similar).
+  - Os canais são manipulados apenas com:
+    - 'send'    => similar ao 'V' dos semáforos
+      (envia uma mensagem para um canal)
+    - 'receive' => similar ao 'P' dos semáforos
+      (recebe uma mensagem para um canal)
+
+    - OBS:
+        - O número de mensagens enfileiradas seria o mesmo que o
+          valor do semáforo.
+
+* Sintaxe
+    - Para declarar um canal:
+        | chan nomeDoCanal (tipo1[id1], tipo2[id2], ..., tipoN[idN])
+
+
+    - Exemplo 1:
+        | chan input(char); # Canal chamado input que
+        |                   # vai enviar/receber 1 caracter
+
+        | send input('c'); --.          | receive['c']; <----.
+        | send input('d'); -.'--.       | receive['d']; <--. |
+        | send input('a'); .'--.|       | receive['a']; <. | |
+                           '--.||                        | | |
+                         .----:'|                        | | |
+                    .----:----:-'                        | | |
+                    |    |    |                          | | |
+                  ['c']['d']['a'][   ][   ][   ][   ]    | | |
+                    |    |    '--------------------------' | |
+                    |    '---------------------------------' |
+                    '----------------------------------------'
+
+        - Observações:
+            - O 'receive' é bloqueante, assim como P's e wait's.
+            - O 'send' não é bloqueante, similar aos V's e signal's.
+
+    - Exemplo 2:
+        | chan diskAccess(int cyl, int block, int count, char buf)
+
+        - Criei um canal chamado 'diskAcess' que vai transmitir
+          mensagens em cujo conteúdo há 3 inteiros e 1 caracter.
+
+    - É possível ter vetores de canais
+        - Num vetor de 'n' canais , cada canal envia/recebe 1
+          número inteiro.
+
+    - Um processo envia mensagens por meio de um canal:
+
+        - Código geral:
+            | send ch(expr1, expr2, ..., exprN)
+        - Exemplo concreto:
+            | send diskAccess(2, 4 + var, var2, buff1);
+
+        - Observações:
+          - 'expr_i' pode ser variável, valor ou expressão dos
+             mesmos tipos esperados pelo canal 'ch'.
+          - Vamos considerar que a fila do canal é ilimitada.
+
+    - Um processo revebe mensagens de um canal:
+        
+        - Código geral:
+            | receive ch(var1, var2, ..., varN);
+
+        - Apenas lembrando que os tipos de 'var_i' tem que ser os
+          tipos que foram declarados no mesmo canal.
+        - Na prática, o 'receive' não é uma espera ocupada. O S.O
+          avisaria para o processo que há uma mensagem nova.

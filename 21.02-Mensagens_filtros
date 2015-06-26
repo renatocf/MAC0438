@@ -1,0 +1,59 @@
+Troca de mensagens e filtros
+=============================
+
+* Exemplo 1: unir caracteres em linhas
+    - Escreva um processo de filtagem de mensagens que recebe caracteres
+      simples do canal 'input', junta esses caracteres em linhas e
+      envia as linhas resultantes no canal 'output'.
+        - Obs: sei quando completar uma linha porque o 'enter'
+               é recebido no 'input'.
+
+    - Simulação visual:
+                             receive
+          .------------------------------.
+          |                  receive     |
+          |    .------------------------.|
+          |    |             receive    ||
+          |    |    .------------------.||      send
+          |    |    |        receive   |||   .-------.
+          |    |    |     .-----------.|||   |       |
+          |    |    |     |          .----------.    |
+        ['b']['l']['a']['\n'][ ][ ]  | PROCESSO | ["bla"][ ][ ][ ]
+                                     '----------'
+
+    - 1ª versão (correta)
+
+        | chan input(char), output(char[MAXLINE]);
+        |
+        | process CharToLine {
+        |     char line[MAXLINE]; int i = 0;
+        |     while (TRUE) {
+        |         receive input(line[i]);
+        |         while (line [i] != '\n' and i < MAXLINE) {
+        |             i = i + 1;
+        |             receive input(line[i]);
+        |         }
+        |         line[i] = EOL;
+        |         send output(line);
+        |         i = 0;
+        |     }
+        | }
+
+        - Observações
+            - Nesse caso, não era para envergarmos o '\n' na linha.
+            - Existe um caracter especial EOL que marca o fim da linha.
+
+* Em alguns casos, enquanto não houver mensagens, gostaríamos de que
+  o processo pudesse realizar outras ações.
+
+* Quando precisarmos verificar se tem uma mensagem no canal antes de
+  ficar ocupado, podemos usar a função:
+    | empty(nomeDoCanal) # => 'true', se não há mensagem em
+    |                    #    'nomeDoCanal'
+    |                    # => 'false', caso contrário
+
+    - Observações
+        - Em monitores, o 'empty' é executado dentro do monitor e
+          na maioria das vezes com um signal em seguida. Nesse caso,
+          o 'signal' consegue tirar alguém da fila.
+        - Em canais, o 'empty' não pode ser útil nesse sentido.
