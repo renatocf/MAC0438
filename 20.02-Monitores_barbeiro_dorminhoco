@@ -17,8 +17,8 @@ Monitores e o problema do Barbeiro Dorminhoco
     - Clientes entram pela porta de entrada e saem pela porta de saída.
     - A barbearia é pequena, então não máximo um cliente ou o barbeiro
       podem se movimentar lá dentro (a barbearia vai ser o monitor).
-    - O barbeiro só corta cabelos infinitamento. Se não há cliente, ele
-      dorme na cadeira e do barbeiro.
+    - O barbeiro só corta cabelos infinitamente. Se não há cliente, ele
+      dorme na cadeira do barbeiro.
 
     1. Quando um cliente chega e encontra o barbeiro dormindo, ele
        acorda o barbeiro, senta na cadeira do barbeiro e dorme enquanto
@@ -32,11 +32,11 @@ Monitores e o problema do Barbeiro Dorminhoco
 
 * Para modelar o problema, precisaremos de:
     - 3 procedimentos
-        - get_haircut
+        - `get_haircut`
             - Chamada pelos clientes
-        - get_next_customer
+        - `get_next_customer`
             - Chamada repetidamente pelo barbeiro
-        - finished_cut
+        - `finished_cut`
             - Chamado pelo barbeiro quando terminar um corte.
 
     - Variáveis contadoras

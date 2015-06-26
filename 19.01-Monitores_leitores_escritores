@@ -8,7 +8,7 @@ Monitores e o problema dos leitores e escritores
   garantida pelo monitor é indesejada: queremos que múltiplos leitores
   acessem a base de dados AO MESMO TEMPO. Se usássemos o monitor na
   fila, a leitura seria sequencial, e poderíamos fazer um ataque de
-  negação de serviços apenas com uma leitura grande.
+  negação de serviços (DoS/DDoS) apenas com uma leitura grande.
 
 * Conceitualmente, podemos definir o problema dos leitores e escritores
   como sendo:
@@ -71,8 +71,8 @@ Monitores e o problema dos leitores e escritores
         |   procedure releaseRead() {
         |     nr = nr -1;
         |     if (nr == 0) signal(ok_to_write);
-        |     # Não precisamos fazer 'nw == 0', pois se houvesse com
-        |     # o leitor não teria chegado aqui.
+        |     # Não precisamos fazer 'nw == 0', pois se o valor fosse
+        |     # diferente o leitor não teria chegado aqui.
         |   }
         |
         |   procedure requireWrite() {

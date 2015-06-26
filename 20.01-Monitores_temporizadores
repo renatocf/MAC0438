@@ -13,13 +13,13 @@ Monitores e temporizadores
     - O recurso será um relógio lógico.
     - O relógio vai ser acessado por processos que querem dormir.
         - Vamos  criar o procedimento 'delay(intervalo)'.
-        - Os process que querem dormir vão chamar esse procedimento. Os
-          processos formirão numa fila de variável de combinação até ter
-          passar um intervalo u.t.
+        - Os processos que querem dormir vão chamar esse procedimento. Os
+          processos dormirão numa fila de variável de condição até
+          passar um intervalo de u.t.
     - O relógio precisa saber quando passa 1 tick, ou 1 unidade de
-      tempo.
-        - Vamos criar um procedimento 'tick()'.
-        - Vamos considerar que existe um processo de alta prioridade que
+      tempo (u.t).
+        - Criaremos um procedimento 'tick()'.
+        - Consideraremos que existe um processo de alta prioridade que
           roda esse tick de 1 em 1 u.t. (isso pode ser um temporizador
           de hardware).
 
@@ -32,7 +32,7 @@ Monitores e temporizadores
 
     - Quando um processo acorda?
         - Precisamos calcular a hora de acordar.
-        - wake-time = tod + intervalo, vai ser uma variável local de
+        - 'wake-time = tod + intervalo', vai ser uma variável local de
           cada processo.
 
     | monitor temporizador1 {
@@ -65,10 +65,10 @@ Monitores e temporizadores
 * 2ª solução (correta, mais eficiente)
     - Vamos verificar os processos na ordem que eles precisam
       acordar.
-    - Se encontramos um prcesso que não precisa acordar, não olhamos os
+    - Se encontramos um processo que não precisa acordar, não olhamos os
       próximos (pois o tempo deles SERÁ maior).
     - Conseguimos fazer isso usando wait com prioridade, ordenando pelo
-      'wake_ime'.
+      'wake_time'.
 
     | monitor temporizador2 {
     |   int tod = 0;
