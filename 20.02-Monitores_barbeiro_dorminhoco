@@ -90,7 +90,7 @@ Monitores e o problema do Barbeiro Dorminhoco
     |
     |   cond barber_available; # sinaliza que barber > 0
     |                          # (ou seja: barbeiro disponível)
-    |   cond char_occupied;    # sinaliza se chair > 0
+    |   cond chair_occupied;   # sinaliza se chair > 0
     |                          # (ou seja, a cadeira está disponível)
     |   cond door_opened;      # Sinaliza se open > 0
     |                          # (ou seja, há um cliente saindo)
