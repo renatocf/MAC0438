@@ -64,7 +64,7 @@ Monitores e o problema do escalonamento de processos
         |   }
         |
         |   procedure release() {
-        |     if (emtpy(turn)) free = true;
+        |     if (empty(turn)) free = true;
         |     else signal(turn);
         |   }
         | }
